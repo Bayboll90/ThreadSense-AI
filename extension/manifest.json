@@ -1,0 +1,109 @@
+{
+  "manifest_version": 3,
+  "name": "ThreadSense AI",
+  "version": "2.0.0",
+  "description": "Помогает находить релевантные обсуждения в Threads и готовить ответы в выбранном стиле с помощью подключаемой AI-модели.",
+  "minimum_chrome_version": "116",
+
+  "permissions": [
+    "storage",
+    "alarms",
+    "tabs",
+    "notifications",
+    "scripting",
+    "debugger"
+  ],
+
+  "host_permissions": [
+    "https://www.threads.com/*",
+    "https://threads.com/*",
+    "https://www.threads.net/*",
+    "https://threads.net/*",
+    "https://api.openai.com/*",
+    "https://api.anthropic.com/*",
+    "https://api.deepseek.com/*",
+    "https://api.moonshot.ai/*",
+    "https://generativelanguage.googleapis.com/*",
+    "https://api.x.ai/*",
+    "https://api.mistral.ai/*",
+    "https://api.groq.com/*",
+    "https://openrouter.ai/*",
+    "https://api.together.xyz/*",
+    "https://news.google.com/*",
+    "https://hn.algolia.com/*",
+    "https://api.github.com/*",
+    "https://raw.githubusercontent.com/*",
+    "https://registry.modelcontextprotocol.io/*"
+  ],
+
+  "optional_host_permissions": [
+    "https://*/*",
+    "http://*/*",
+    "http://localhost/*",
+    "http://127.0.0.1/*"
+  ],
+
+  "background": {
+    "service_worker": "src/bg/service_worker.js",
+    "type": "module"
+  },
+
+  "content_scripts": [
+    {
+      "matches": [
+        "https://www.threads.com/*",
+        "https://threads.com/*",
+        "https://www.threads.net/*",
+        "https://threads.net/*"
+      ],
+      "js": [
+        "src/content/lib/util.js",
+        "src/content/lib/rng.js",
+        "src/content/lib/keepalive.js",
+        "src/content/lib/lock.js",
+        "src/content/lib/input.js",
+        "src/content/selectors.js",
+        "src/content/buttons.js",
+        "src/content/nested.js",
+        "src/content/human/mouse.js",
+        "src/content/human/typing.js",
+        "src/content/human/scroll.js",
+        "src/content/human/reading.js",
+        "src/content/guard.js",
+        "src/content/feed.js",
+        "src/content/thread.js",
+        "src/content/composer.js",
+        "src/content/publisher.js",
+        "src/content/profile.js",
+        "src/content/inspector.js",
+        "src/content/overlay.js",
+        "src/content/content.js"
+      ],
+      "run_at": "document_idle",
+      "all_frames": false
+    }
+  ],
+
+  "action": {
+    "default_popup": "src/ui/popup.html",
+    "default_title": "ThreadSense AI",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "32": "icons/icon32.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
+  },
+
+  "options_ui": {
+    "page": "src/ui/options.html",
+    "open_in_tab": true
+  },
+
+  "icons": {
+    "16": "icons/icon16.png",
+    "32": "icons/icon32.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  }
+}

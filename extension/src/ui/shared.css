@@ -1,0 +1,275 @@
+/* Общие стили popup и страницы настроек. */
+
+:root {
+  --bg: #0f0f13;
+  --bg-2: #17171d;
+  --bg-3: #1e1e26;
+  --line: #2a2a34;
+  --text: #ececf0;
+  --text-2: #9a9aa6;
+  --text-3: #6b6b78;
+  --accent: #7c5cff;
+  --accent-2: #9d85ff;
+  --ok: #30a46c;
+  --warn: #f5a524;
+  --err: #e5484d;
+  --radius: 10px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font: 13px/1.5 -apple-system, "Segoe UI", system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3 {
+  margin: 0;
+  font-weight: 600;
+}
+
+a {
+  color: var(--accent-2);
+}
+
+/* ------------------------------- Элементы ------------------------------- */
+
+button,
+.btn {
+  all: unset;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 7px 13px;
+  border-radius: 8px;
+  background: var(--bg-3);
+  color: var(--text);
+  border: 1px solid var(--line);
+  cursor: pointer;
+  font-size: 12.5px;
+  font-weight: 500;
+  text-align: center;
+  transition: background 0.12s, border-color 0.12s;
+}
+
+button:hover:not(:disabled),
+.btn:hover {
+  background: #262630;
+  border-color: #3a3a46;
+}
+
+button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+button.primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+
+button.primary:hover:not(:disabled) {
+  background: var(--accent-2);
+  border-color: var(--accent-2);
+}
+
+button.danger {
+  color: var(--err);
+  border-color: #45252a;
+}
+
+button.danger:hover:not(:disabled) {
+  background: #2a1a1d;
+}
+
+button.ghost {
+  background: transparent;
+  border-color: transparent;
+  color: var(--text-2);
+  padding: 5px 8px;
+}
+
+button.ghost:hover:not(:disabled) {
+  background: var(--bg-3);
+  color: var(--text);
+}
+
+button.sm {
+  padding: 4px 9px;
+  font-size: 11.5px;
+}
+
+input[type="text"],
+input[type="password"],
+input[type="number"],
+input[type="url"],
+textarea,
+select {
+  width: 100%;
+  padding: 7px 10px;
+  border-radius: 8px;
+  background: var(--bg);
+  border: 1px solid var(--line);
+  color: var(--text);
+  font: inherit;
+  outline: none;
+}
+
+input:focus,
+textarea:focus,
+select:focus {
+  border-color: var(--accent);
+}
+
+textarea {
+  resize: vertical;
+  min-height: 68px;
+  line-height: 1.55;
+}
+
+input[type="range"] {
+  width: 100%;
+  accent-color: var(--accent);
+  cursor: pointer;
+}
+
+input[type="checkbox"] {
+  accent-color: var(--accent);
+  width: 15px;
+  height: 15px;
+  cursor: pointer;
+  margin: 0;
+}
+
+label {
+  display: block;
+}
+
+/* -------------------------------- Утилиты -------------------------------- */
+
+.muted { color: var(--text-2); }
+.dim   { color: var(--text-3); }
+.tiny  { font-size: 11px; }
+.mono  { font-variant-numeric: tabular-nums; }
+.row   { display: flex; align-items: center; gap: 8px; }
+.grow  { flex: 1; }
+.wrap  { flex-wrap: wrap; }
+.right { margin-left: auto; }
+.hidden { display: none !important; }
+
+.card {
+  background: var(--bg-2);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 13px;
+}
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+  background: var(--bg-3);
+  color: var(--text-2);
+  border: 1px solid var(--line);
+}
+
+.pill.ok   { color: var(--ok);   border-color: #1d3c2c; background: #14251d; }
+.pill.warn { color: var(--warn); border-color: #453620; background: #2a2113; }
+.pill.err  { color: var(--err);  border-color: #45252a; background: #2a1518; }
+
+.dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--text-3);
+  flex: none;
+}
+
+.dot.ok   { background: var(--ok);   box-shadow: 0 0 7px rgba(48, 163, 108, 0.7); }
+.dot.warn { background: var(--warn); }
+.dot.err  { background: var(--err);  box-shadow: 0 0 7px rgba(229, 72, 77, 0.6); }
+
+.bar {
+  height: 5px;
+  border-radius: 3px;
+  background: var(--bg-3);
+  overflow: hidden;
+}
+
+.bar > i {
+  display: block;
+  height: 100%;
+  background: var(--accent);
+  border-radius: 3px;
+  transition: width 0.3s;
+}
+
+.bar.warn > i { background: var(--warn); }
+.bar.err  > i { background: var(--err); }
+
+/* Переключатель */
+
+.switch {
+  position: relative;
+  display: inline-block;
+  width: 38px;
+  height: 21px;
+  flex: none;
+}
+
+.switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+  position: absolute;
+}
+
+.switch span {
+  position: absolute;
+  inset: 0;
+  background: var(--bg-3);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  cursor: pointer;
+  transition: background 0.16s;
+}
+
+.switch span::before {
+  content: "";
+  position: absolute;
+  width: 15px;
+  height: 15px;
+  left: 2px;
+  top: 2px;
+  background: var(--text-2);
+  border-radius: 50%;
+  transition: transform 0.16s, background 0.16s;
+}
+
+.switch input:checked + span {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
+.switch input:checked + span::before {
+  transform: translateX(17px);
+  background: #fff;
+}
+
+/* Скроллбар */
+
+::-webkit-scrollbar { width: 9px; height: 9px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #2e2e39; border-radius: 5px; }
+::-webkit-scrollbar-thumb:hover { background: #3d3d4a; }

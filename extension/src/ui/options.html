@@ -1,0 +1,335 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <title>ThreadSense AI — настройки</title>
+  <link rel="stylesheet" href="shared.css">
+  <link rel="stylesheet" href="options.css">
+</head>
+<body>
+
+<!-- ====================== Мастер первого запуска ====================== -->
+<div id="wizard" class="wizardWrap hidden">
+  <div class="wizard">
+    <div class="wizSteps">
+      <span class="on" data-step="1">1</span>
+      <span data-step="2">2</span>
+      <span data-step="3">3</span>
+    </div>
+
+    <section class="wizStep" data-step="1">
+      <h2>Подключение AI</h2>
+      <p class="muted">Выбери провайдера ниже. Ключ хранится в локальном хранилище расширения и отправляется только выбранному API.</p>
+      <label>Провайдер
+        <select id="wizProvider"></select>
+      </label>
+      <input type="password" id="wizKey" placeholder="API key" autocomplete="off">
+      <div class="row">
+        <button class="primary" id="wizTestKey">Проверить</button>
+        <span id="wizKeyResult" class="tiny"></span>
+      </div>
+    </section>
+
+    <section class="wizStep hidden" data-step="2">
+      <h2>Насколько осторожно работать</h2>
+      <p class="muted">Начни с осторожного режима. Поднять темп можно в любой момент,
+        а вот вернуть доверие аккаунта после ограничений — нет.</p>
+      <div class="presetGrid" id="wizPresets"></div>
+    </section>
+
+    <section class="wizStep hidden" data-step="3">
+      <h2>Твой стиль</h2>
+      <p class="muted">Открой вкладку с Threads и залогинься. Агент пройдёт по твоему профилю,
+        соберёт посты и ответы и построит описание манеры письма.</p>
+      <label>Твой хэндл
+        <input type="text" id="wizHandle" placeholder="your_handle">
+      </label>
+      <div class="row">
+        <button class="primary" id="wizTrain">Обучить стиль</button>
+        <button class="ghost" id="wizSkipTrain">Пропустить</button>
+      </div>
+      <div id="wizTrainResult" class="tiny muted"></div>
+    </section>
+
+    <div class="wizNav">
+      <button class="ghost" id="wizBack">Назад</button>
+      <button class="primary" id="wizNext">Дальше</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============================== Основное ============================== -->
+<div id="app">
+  <aside>
+    <div class="brand">
+      <span class="dot" id="navDot"></span>
+      <strong>ThreadSense AI</strong>
+    </div>
+
+    <!--
+      Разделы разделены на нужные всем и нужные редко.
+
+      Пресет задаёт весь режим работы целиком — лимиты, тайминги, пороги
+      отбора, фильтры, автопостинг и защиты. Всё, что лежит в «расширенных»,
+      этим пресетом уже настроено; трогать это нужно, только когда хочется
+      отклониться от режима осознанно. Показывать полтора десятка вкладок
+      человеку, которому достаточно выбрать один из трёх режимов, значит
+      создавать ощущение, что без них не заработает.
+    -->
+    <nav id="nav">
+      <button data-tab="start" class="on">Старт</button>
+      <button data-tab="queue">Очередь <span class="pill" id="navQueue">0</span></button>
+      <button data-tab="ai">AI и модели</button>
+      <button data-tab="style">Стиль письма</button>
+      <button data-tab="log">Журнал</button>
+    </nav>
+
+    <button class="advToggle" id="advToggle" aria-expanded="false">
+      Расширенные настройки
+      <span class="chev">▾</span>
+    </button>
+
+    <nav id="navAdv" class="hidden">
+      <button data-tab="niche">Ниша и источники</button>
+      <button data-tab="filters">Фильтры</button>
+      <button data-tab="momentum">Импульс постов</button>
+      <button data-tab="scoring">Отбор веток</button>
+      <button data-tab="humanize">Гуманизация</button>
+      <button data-tab="angles">Углы захода</button>
+      <button data-tab="timing">Тайминги</button>
+      <button data-tab="limits">Лимиты</button>
+      <button data-tab="typing">Набор текста</button>
+      <button data-tab="safety">Безопасность</button>
+      <button data-tab="tools">Диагностика</button>
+    </nav>
+
+    <div class="asideFoot">
+      <div class="tiny dim" id="saveState">сохранено</div>
+    </div>
+  </aside>
+
+  <main>
+    <!-- ------------------------------ Старт ------------------------------ -->
+    <section data-tab="start" class="tab on">
+      <h1>Старт</h1>
+
+      <div class="card statusCard">
+        <div class="row">
+          <span class="dot" id="stDot"></span>
+          <div class="grow">
+            <strong id="stStatus">—</strong>
+            <div class="tiny muted" id="stWhy"></div>
+          </div>
+          <label class="switch"><input type="checkbox" id="stPower"><span></span></label>
+        </div>
+        <div id="stAlert" class="alertBox hidden"></div>
+      </div>
+
+      <div class="statGrid">
+        <div class="card stat"><span class="tiny dim">Сегодня</span><strong id="stDay">0 / 0</strong></div>
+        <div class="card stat"><span class="tiny dim">Лайков</span><strong id="stLikes">0</strong></div>
+        <div class="card stat"><span class="tiny dim">Просмотров</span><strong id="stViews">0</strong></div>
+        <div class="card stat"><span class="tiny dim">Расход</span><strong id="stSpend">$0</strong></div>
+        <div class="card stat"><span class="tiny dim">Всего</span><strong id="stTotal">0</strong></div>
+        <div class="card stat"><span class="tiny dim">В очереди</span><strong id="stQueue">0</strong></div>
+      </div>
+
+      <div class="card">
+        <h3>Режим публикации</h3>
+        <div class="row" style="margin-top:8px">
+          <div class="grow">
+            <strong>Автопилот</strong>
+            <div class="tiny muted">Выключен — черновики ждут подтверждения в очереди. Включен — публикуются сами.</div>
+          </div>
+          <label class="switch"><input type="checkbox" id="stAutopilot"><span></span></label>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>Пресет безопасности</h3>
+        <div class="presetGrid" id="presets"></div>
+      </div>
+
+      <div class="card">
+        <h3>Прогноз</h3>
+        <div id="estimate" class="estimate"></div>
+      </div>
+
+      <div class="card">
+        <h3>История</h3>
+        <div id="history" class="history"></div>
+      </div>
+    </section>
+
+    <!-- ------------------------------ Очередь ---------------------------- -->
+    <section data-tab="queue" class="tab">
+      <h1>Очередь на подтверждение</h1>
+      <p class="muted">Чтобы опубликовать, нужна открытая вкладка Threads — агент печатает
+        в ней по-настоящему, а не отправляет запрос напрямую.</p>
+      <div class="row" style="margin-bottom:12px">
+        <button id="qRefresh">Обновить</button>
+        <button class="ghost" id="qShowDone">Показать обработанные</button>
+      </div>
+      <div id="queueList"></div>
+    </section>
+
+    <!-- ------------------------ Остальные вкладки ------------------------ -->
+    <section data-tab="ai" class="tab"><h1>ИИ и модели</h1><div class="fields" id="f-ai"></div></section>
+    <section data-tab="niche" class="tab"><h1>Ниша и источники</h1><div class="fields" id="f-niche"></div></section>
+
+    <section data-tab="filters" class="tab">
+      <h1>Фильтры</h1>
+      <p class="muted">Работают до скоринга и до обращения к ИИ. Отсеять здесь — бесплатно,
+        отсеять после генерации — уже потрачены и токены, и время.</p>
+      <div class="fields" id="f-filters"></div>
+    </section>
+
+    <section data-tab="momentum" class="tab">
+      <h1>Импульс постов</h1>
+      <p class="muted">Скоринг смотрит на состояние поста, импульс — на скорость его роста.
+        Это разные вещи: пост с сорока лайками за двадцать минут и такой же за двенадцать часов
+        одинаковы по счётчикам, но первый показывают людям прямо сейчас.</p>
+      <div class="card formulaCard">
+        <div class="tiny muted">Очки импульса и скорость</div>
+        <code class="formula">очки = лайки + ответы×3 + репосты×4 &nbsp;·&nbsp; скорость = очки / max(0.35, возраст в часах)</code>
+        <div class="tiny dim">Веса отражают стоимость действия: лайк дёшев, ответ требует усилия,
+          репост означает готовность показать пост своей аудитории. Метрика детерминированная
+          и не стоит ни одного токена.</div>
+      </div>
+      <div class="fields" id="f-momentum"></div>
+    </section>
+    <section data-tab="scoring" class="tab">
+      <h1>Отбор веток</h1>
+      <div class="card formulaCard">
+        <div class="tiny muted">Итоговый скор поста</div>
+        <code class="formula">score = w<sub>rel</sub>·Релевантность + w<sub>fresh</sub>·Свежесть + w<sub>eng</sub>·Живость + w<sub>opp</sub>·Шанс + w<sub>auth</sub>·Автор − w<sub>risk</sub>·Риск</code>
+        <div class="tiny dim">Свежесть = exp(−возраст/τ) · Живость = log(1+лайки)/log(1+потолок) · Шанс = Живость/(1+ответы/k)</div>
+      </div>
+      <div class="fields" id="f-scoring"></div>
+    </section>
+    <section data-tab="style" class="tab">
+      <h1>Стиль письма</h1>
+      <div class="card">
+        <div class="row">
+          <div class="grow">
+            <strong>Обучить с моего профиля</strong>
+            <div class="tiny muted">Соберёт посты и ответы с твоего профиля и построит описание манеры.
+              Нужна открытая вкладка Threads.</div>
+          </div>
+          <button class="primary" id="trainStyle">Обучить</button>
+        </div>
+        <div id="trainResult" class="tiny muted" style="margin-top:8px"></div>
+      </div>
+      <div class="fields" id="f-style"></div>
+    </section>
+    <section data-tab="humanize" class="tab">
+      <h1>Гуманизация</h1>
+      <p class="muted">Применяется к тексту уже после генерации, локально. Просить модель
+        «писать с ошибками» бесполезно — она делает это карикатурно.</p>
+      <div class="card">
+        <h3>Предпросмотр</h3>
+        <textarea id="humInput" rows="2">Согласен с автором — этот подход действительно работает. Кстати, важно отметить, что результат зависит от данных.</textarea>
+        <button id="humPreview" style="margin-top:8px">Прогнать 4 раза</button>
+        <div id="humOutput" class="previewList"></div>
+      </div>
+      <div class="fields" id="f-humanize"></div>
+    </section>
+    <section data-tab="angles" class="tab">
+      <h1>Углы захода</h1>
+      <p class="muted">Вес — относительная вероятность выбора. Ноль выключает угол.
+        Углы, использованные недавно, автоматически приглушаются.</p>
+      <div class="fields" id="f-angles"></div>
+    </section>
+    <section data-tab="timing" class="tab">
+      <h1>Тайминги</h1>
+      <p class="muted">Модель «сессия — перерыв». Паузы берутся из экспоненциального распределения,
+        а не из фиксированного интервала: ровная сетка действий — самая заметная подпись автоматизации.</p>
+      <div class="card">
+        <h3>Активность по часам</h3>
+        <div class="tiny muted">Множитель вероятности начать сессию. Ночью почти ноль — редкое позднее
+          сообщение выглядит естественно, регулярная ночная работа нет.</div>
+        <div id="circadian" class="circadian"></div>
+      </div>
+      <div class="fields" id="f-timing"></div>
+    </section>
+    <section data-tab="limits" class="tab"><h1>Лимиты и камуфляж</h1><div class="fields" id="f-limits"></div></section>
+    <section data-tab="typing" class="tab">
+      <h1>Набор текста</h1>
+      <p class="muted">Скорость и ритм набора в поле ответа. Мгновенная вставка готовой строки —
+        сигнал автоматизации, который платформа видит без всякой эвристики.</p>
+      <div class="fields" id="f-typing"></div>
+    </section>
+    <section data-tab="safety" class="tab"><h1>Безопасность</h1><div class="fields" id="f-safety"></div></section>
+
+    <!-- ------------------------------ Журнал ----------------------------- -->
+    <section data-tab="log" class="tab">
+      <h1>Журнал</h1>
+      <div class="row" style="margin-bottom:12px">
+        <button id="logRefresh">Обновить</button>
+        <button class="ghost" id="logClear">Очистить</button>
+        <select id="logFilter" style="width:auto">
+          <option value="">все события</option>
+          <option value="comment">публикации</option>
+          <option value="queued">черновики</option>
+          <option value="skip">пропуски</option>
+          <option value="guard">сторож</option>
+          <option value="error">ошибки</option>
+        </select>
+      </div>
+      <div id="logList" class="logFull"></div>
+    </section>
+
+    <!-- --------------------------- Диагностика --------------------------- -->
+    <section data-tab="tools" class="tab">
+      <h1>Диагностика</h1>
+
+      <div class="card">
+        <h3>Проверка селекторов</h3>
+        <p class="tiny muted">Threads меняет разметку без предупреждения. Инспектор прогонит все
+          стратегии поиска на открытой вкладке и покажет, что именно перестало находиться.
+          Чинить нужно один файл — <code>src/content/selectors.js</code>.</p>
+        <div class="row">
+          <button class="primary" id="runInspector">Запустить</button>
+          <button class="ghost" id="highlightOn">Подсветить посты</button>
+          <button class="ghost" id="highlightOff">Убрать подсветку</button>
+        </div>
+        <div id="inspectorResult"></div>
+      </div>
+
+      <div class="card">
+        <h3>Пробный комментарий</h3>
+        <p class="tiny muted">Сгенерировать ответ к произвольному тексту, ничего не публикуя.
+          Расходует токены, но не трогает лимиты аккаунта.</p>
+        <label>Текст поста
+          <textarea id="dryText" rows="3" placeholder="Вставь сюда текст поста из Threads"></textarea>
+        </label>
+        <label style="margin-top:8px">Ответы в ветке, по одному на строку (необязательно)
+          <textarea id="dryReplies" rows="2" placeholder="автор: текст ответа"></textarea>
+        </label>
+        <button class="primary" id="runDry" style="margin-top:8px">Сгенерировать</button>
+        <div id="dryResult"></div>
+      </div>
+
+      <div class="card">
+        <h3>Настройки файлом</h3>
+        <div class="row wrap">
+          <button id="exportSettings">Выгрузить JSON</button>
+          <button id="importSettings">Загрузить JSON</button>
+          <input type="file" id="importFile" accept="application/json" class="hidden">
+          <button class="danger right" id="resetSettings">Сбросить настройки</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>Счётчики</h3>
+        <p class="tiny muted">Сбросит статистику, кулдауны авторов, историю комментариев и прогрев.
+          Настройки не тронет.</p>
+        <button class="danger" id="resetState">Сбросить счётчики</button>
+      </div>
+    </section>
+  </main>
+</div>
+
+<script type="module" src="options.js"></script>
+</body>
+</html>

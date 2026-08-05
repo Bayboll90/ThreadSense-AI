@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <title>ThreadSense AI</title>
+  <link rel="stylesheet" href="shared.css">
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <!--
+    Главный экран: режим, старт-стоп, что сделано сегодня, автопилот, события.
+    Больше здесь ничего быть не должно. Всё, что требует разбираться в
+    настройках, живёт на отдельной странице и по умолчанию скрыто —
+    расширенные настройки нужны редко, а путают постоянно.
+  -->
+  <header>
+    <div class="row">
+      <span class="dot" id="dot"></span>
+      <strong class="grow">ThreadSense AI</strong>
+    </div>
+    <div class="tiny muted" id="statusLine">загрузка…</div>
+  </header>
+
+  <div id="alert" class="alert hidden"></div>
+  <div id="setup" class="alert warn hidden"></div>
+
+  <!-- 1. Режим -->
+  <section class="card">
+    <div class="tiny dim label">Режим</div>
+    <div class="presets" id="presets"></div>
+  </section>
+
+  <!-- 2. Старт-стоп -->
+  <button class="bigStart" id="power">Запустить</button>
+
+  <!-- 3. Что сделано сегодня -->
+  <section class="card stats">
+    <div class="statRow">
+      <span class="muted">Комментарии</span>
+      <strong class="mono right" id="dayCount">0 / 0</strong>
+    </div>
+    <div class="bar" id="dayBar"><i style="width:0%"></i></div>
+
+    <div class="statRow" style="margin-top:8px">
+      <span class="muted">Посты</span>
+      <strong class="mono right" id="dayPosts">0 / 0</strong>
+    </div>
+    <div class="bar" id="postBar"><i style="width:0%"></i></div>
+
+    <div class="grid3" style="margin-top:10px">
+      <div><span class="tiny dim">лайков</span><strong class="mono" id="dayLikes">0</strong></div>
+      <div><span class="tiny dim">просмотров</span><strong class="mono" id="dayViews">0</strong></div>
+      <div><span class="tiny dim">потрачено</span><strong class="mono" id="daySpend">$0</strong></div>
+    </div>
+
+    <div class="tiny dim" id="warmupLine"></div>
+  </section>
+
+  <!-- 4. Автопилот -->
+  <section class="card">
+    <div class="row">
+      <div class="grow">
+        <strong>Автопилот</strong>
+        <div class="tiny muted" id="autopilotHint">Публикует сам, без подтверждения</div>
+      </div>
+      <label class="switch">
+        <input type="checkbox" id="autopilot">
+        <span></span>
+      </label>
+    </div>
+    <button class="ghost sm hidden" id="openQueue">Открыть очередь (<span id="queueCount">0</span>)</button>
+  </section>
+
+  <!-- 5. События -->
+  <section class="log">
+    <div class="row">
+      <strong class="tiny grow">События</strong>
+      <button class="ghost sm" id="openLog">все</button>
+    </div>
+    <div id="logList"></div>
+  </section>
+
+  <footer>
+    <button class="ghost grow" id="openOptions">Настройки</button>
+    <button class="ghost" id="openThreads">Threads</button>
+  </footer>
+
+  <script type="module" src="popup.js"></script>
+</body>
+</html>

@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <title>ThreadSense AI — состояние</title>
+  <style>
+    /*
+     * Крупно и контрастно — намеренно.
+     *
+     * Это окно смотрят не глазами за столом, а со снимка экрана сервера,
+     * снятого через PrintWindow и уменьшенного до ширины письма. Мелкий
+     * серый текст на таком снимке не читается, а именно ради чтения
+     * снимком окно и существует.
+     */
+    :root { color-scheme: dark; }
+    body {
+      margin: 0; padding: 12px 14px;
+      font: 14px/1.45 -apple-system, "Segoe UI", Roboto, sans-serif;
+      background: #17171b; color: #e9e9ee;
+    }
+    .head { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+    .dot { width: 10px; height: 10px; border-radius: 50%; background: #3ecf6b; flex: none; }
+    .dot.off { background: #8a8a92; }
+    .dot.stop { background: #e0574a; }
+    .title { font-weight: 600; font-size: 13px; letter-spacing: .2px; }
+    .status { font-size: 19px; font-weight: 600; margin-bottom: 2px; }
+    .why { color: #b6b6c0; margin-bottom: 8px; min-height: 19px; }
+    .next { color: #b6b6c0; }
+    .counters { margin-top: 10px; padding-top: 9px; border-top: 1px solid #2c2c33; color: #b6b6c0; }
+    .counters b { color: #e9e9ee; font-weight: 600; }
+    .halt { margin-top: 9px; padding: 7px 9px; border-radius: 7px; background: #3a2020; color: #ffb3ab; }
+    .quiet { color: #8a8a92; }
+  </style>
+</head>
+<body>
+  <div class="head">
+    <span class="dot" id="dot"></span>
+    <span class="title" id="handle">ThreadSense AI</span>
+  </div>
+
+  <div class="status" id="status">—</div>
+  <div class="why" id="why"></div>
+  <div class="next" id="next"></div>
+
+  <div class="counters" id="counters"></div>
+  <div class="halt" id="halt" hidden></div>
+
+  <script src="status.js" type="module"></script>
+</body>
+</html>

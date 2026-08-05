@@ -1,0 +1,192 @@
+body {
+  width: 328px;
+  padding: 12px;
+  display: grid;
+  gap: 10px;
+}
+
+header {
+  display: grid;
+  gap: 3px;
+}
+
+header strong {
+  font-size: 14px;
+}
+
+.alert {
+  padding: 9px 11px;
+  border-radius: 8px;
+  background: #2a1518;
+  border: 1px solid #45252a;
+  color: #ff9b9e;
+  font-size: 12px;
+  display: grid;
+  gap: 6px;
+}
+
+.alert button {
+  justify-self: start;
+}
+
+.stats {
+  display: grid;
+  gap: 8px;
+}
+
+.statRow {
+  display: flex;
+  align-items: baseline;
+  font-size: 12px;
+}
+
+.statRow strong {
+  font-size: 15px;
+}
+
+.grid3 {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+  padding-top: 2px;
+}
+
+.grid3 > div {
+  display: grid;
+  gap: 1px;
+}
+
+.grid3 strong {
+  font-size: 13px;
+}
+
+#queueCard {
+  display: grid;
+  gap: 7px;
+}
+
+#queueCard button {
+  width: 100%;
+}
+
+.card > .row + .tiny {
+  margin-top: -2px;
+}
+
+.log {
+  display: grid;
+  gap: 5px;
+  max-height: 158px;
+  overflow-y: auto;
+}
+
+.logItem {
+  display: grid;
+  grid-template-columns: 5px 1fr auto;
+  gap: 7px;
+  align-items: baseline;
+  padding: 5px 8px;
+  border-radius: 7px;
+  background: var(--bg-2);
+  font-size: 11.5px;
+  line-height: 1.4;
+}
+
+.logItem .dot {
+  width: 5px;
+  height: 5px;
+  align-self: center;
+}
+
+.logItem .txt {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.logItem .ts {
+  color: var(--text-3);
+  font-size: 10.5px;
+  font-variant-numeric: tabular-nums;
+}
+
+footer {
+  display: flex;
+  gap: 6px;
+  border-top: 1px solid var(--line);
+  padding-top: 9px;
+}
+
+/* ------------------------------------------------------------------ *
+ * Главный экран: режим, старт-стоп, автопилот
+ * ------------------------------------------------------------------ */
+
+.label {
+  margin-bottom: 7px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.presets {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+}
+
+.presetBtn {
+  display: grid;
+  gap: 2px;
+  padding: 9px 6px;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  background: var(--bg-2);
+  color: var(--text-1);
+  cursor: pointer;
+  text-align: center;
+  line-height: 1.25;
+  transition: border-color .12s, background .12s;
+}
+
+.presetBtn strong { font-size: 12px; }
+.presetBtn .tiny { color: var(--text-3); font-size: 10px; }
+
+.presetBtn:hover { border-color: var(--accent); }
+
+.presetBtn.on {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 14%, var(--bg-2));
+}
+.presetBtn.on .tiny { color: var(--text-2); }
+
+/*
+ * Старт-стоп — самая нажимаемая кнопка, поэтому она крупная и одна.
+ * Цвет меняется по состоянию: зелёный зовёт запустить, серый показывает, что
+ * агент уже работает и кнопка теперь останавливает.
+ */
+.bigStart {
+  width: 100%;
+  padding: 13px;
+  font-size: 15px;
+  font-weight: 600;
+  border: 0;
+  border-radius: 11px;
+  cursor: pointer;
+  background: var(--accent);
+  color: #fff;
+  transition: background .12s, opacity .12s;
+}
+
+.bigStart:hover { opacity: .92; }
+
+.bigStart.on {
+  background: var(--bg-3, #2a2f3a);
+  color: var(--text-1);
+  border: 1px solid var(--line);
+}
+
+.bigStart:disabled {
+  opacity: .45;
+  cursor: not-allowed;
+}
+
+.alert.warn button { margin-top: 7px; }

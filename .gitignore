@@ -1,0 +1,39 @@
+# Secrets and local overrides
+.env
+.env.*
+*.pem
+*.key
+*.p12
+*.pfx
+
+# Browser profiles and captured user data
+.test-profile/
+.live-profile/
+test/*.log
+test/*.pid
+test/*-state.json
+test/*-dump*.json
+test/live-report.json
+test/queue-run.json
+
+# Local live/production probes are intentionally not published.
+test/*
+!test/syntax.mjs
+!test/math.mjs
+!test/providers.mjs
+!test/mock-threads.js
+
+# Dependencies, packages and OS/editor files
+node_modules/
+dist/
+build/
+*.zip
+*.crx
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+
+# Private research material is not part of the public project
+Other Projects/
+Screen/
