@@ -2087,6 +2087,23 @@ test('пресеты упорядочены по осторожности', () =
   assert.ok(normal.timing.breakMeanMinutes > active.timing.breakMeanMinutes);
 });
 
+test('интерфейсы показывают режимы в порядке фактической нагрузки', async () => {
+  const order = ['careful', 'normal', 'boost', 'active'];
+  const comments = order.map((name) => defaults.PRESETS[name].limits.perDay);
+  const posts = order.map((name) => defaults.PRESETS[name].posting.perDay);
+
+  assert.deepEqual(comments, [...comments].sort((a, b) => a - b), 'лимиты комментариев идут не по возрастанию');
+  assert.deepEqual(posts, [...posts].sort((a, b) => a - b), 'лимиты постов идут не по возрастанию');
+  assert.equal(new Set(order.map((name) => defaults.PRESETS[name].label)).size, order.length,
+    'у режимов должны быть разные названия');
+
+  for (const file of ['ui/options.js', 'ui/popup.js']) {
+    const source = await readFile(join(EXT, file), 'utf8');
+    assert.match(source, /PRESET_ORDER\s*=\s*\['careful', 'normal', 'boost', 'active'\]/,
+      `${file} показывает режимы не в порядке нагрузки`);
+  }
+});
+
 test('каждый пресет задаёт все пять блоков', () => {
   for (const [name, p] of Object.entries(defaults.PRESETS)) {
     for (const block of ['limits', 'timing', 'scoring', 'filters', 'posting']) {

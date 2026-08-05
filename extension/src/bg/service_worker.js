@@ -781,6 +781,9 @@ async function buildStatus() {
     onboarded: settings.onboarded,
     preset: settings.preset,
     handle: settings.handle,
+    topicReady: !!String(settings.niche?.description || '').trim()
+      || !!settings.niche?.includeKeywords?.length
+      || !!settings.niche?.searchQueries?.length,
 
     day: state.day,
     dayCount: state.dayCount || 0,

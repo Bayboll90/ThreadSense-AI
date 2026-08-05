@@ -300,7 +300,7 @@ export const PRESETS = {
     }
   },
   "active": {
-    "label": "Активный",
+    "label": "Максимальный",
     "hint": "До 28 комментариев и 6 постов в день. Только для прогретого аккаунта.",
     "autopilot": false,
     "limits": {

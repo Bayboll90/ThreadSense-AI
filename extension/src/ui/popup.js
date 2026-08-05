@@ -37,23 +37,28 @@ const els = {
   openQueue: $('#openQueue'),
   queueCount: $('#queueCount'),
   logList: $('#logList'),
+  eventCard: $('.eventCard'),
 };
 
 const send = (msg) => chrome.runtime.sendMessage(msg);
 
 let busy = false;
 
+const PRESET_ORDER = ['careful', 'normal', 'boost', 'active'];
+
 /* --------------------------------- Режимы -------------------------------- */
 
 function renderPresets(current) {
   els.presets.innerHTML = '';
 
-  for (const [key, p] of Object.entries(PRESETS)) {
+  for (const key of PRESET_ORDER) {
+    const p = PRESETS[key];
+    if (!p) continue;
     const b = document.createElement('button');
     b.className = `presetBtn${key === current ? ' on' : ''}`;
     b.innerHTML = `
       <strong>${p.label}</strong>
-      <span class="tiny">${p.limits.perDay} комм · ${p.posting.perDay} пост${p.posting.perDay === 1 ? '' : 'а'}</span>`;
+      <span class="tiny">${p.limits.perDay} комм. · ${p.posting.perDay} ${ruCount(p.posting.perDay, ['пост', 'поста', 'постов'])}</span>`;
     b.title = p.hint;
     b.onclick = async () => {
       if (busy) return;
@@ -71,14 +76,16 @@ function renderPresets(current) {
 function render(s) {
   renderPresets(s.preset);
 
-  els.autopilot.checked = !!s.autopilot;
+  els.autopilot.checked = !s.autopilot;
   els.autopilotHint.textContent = s.autopilot
-    ? 'Комментарии, лайки и посты уходят сами'
-    : 'Всё копится в очереди и ждёт твоего клика';
+    ? 'Автопубликация включена — тексты уходят без подтверждения'
+    : 'Вы подтверждаете каждый текст перед отправкой';
 
   /* Старт-стоп */
 
-  els.power.textContent = s.enabled ? 'Остановить' : 'Запустить';
+  els.power.innerHTML = s.enabled
+    ? '<span>Остановить агента</span><small>Текущая сессия будет завершена</small>'
+    : '<span>Запустить агента</span><small>Начать безопасно, с черновиками</small>';
   els.power.className = `bigStart${s.enabled ? ' on' : ''}`;
   els.power.disabled = !s.hasKey;
 
@@ -87,13 +94,15 @@ function render(s) {
   const missing = [];
   if (!s.hasKey) missing.push('ключ API');
   if (!s.handle) missing.push('свой хэндл в Threads');
+  if (!s.topicReady) missing.push('описание темы');
 
   if (missing.length) {
     els.setup.classList.remove('hidden');
-    els.setup.innerHTML = `<div><strong>Для работы не хватает: ${missing.join(' и ')}</strong></div>`;
+    const completed = 3 - missing.length;
+    els.setup.innerHTML = `<div class="setupTop"><span class="setupIcon">${completed}/3</span><div><strong>Завершите первоначальную настройку</strong><p>Не хватает: ${escapeHtml(missing.join(', '))}.</p></div></div>`;
     const btn = document.createElement('button');
     btn.className = 'sm';
-    btn.textContent = 'Открыть настройки';
+    btn.textContent = 'Продолжить настройку →';
     btn.onclick = () => openOptions('');
     els.setup.appendChild(btn);
   } else {
@@ -225,9 +234,11 @@ async function renderLog() {
 
   els.logList.innerHTML = '';
   if (!log.length) {
-    els.logList.innerHTML = '<div class="tiny dim" style="padding:4px 8px">пока пусто</div>';
+    els.eventCard.classList.add('hidden');
     return;
   }
+
+  els.eventCard.classList.remove('hidden');
 
   for (const e of log) {
     const div = document.createElement('div');
@@ -239,6 +250,15 @@ async function renderLog() {
       <span class="ts">${new Date(e.ts).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })}</span>`;
     els.logList.appendChild(div);
   }
+}
+
+function ruCount(n, forms) {
+  const value = Math.abs(Number(n)) % 100;
+  const last = value % 10;
+  if (value > 10 && value < 20) return forms[2];
+  if (last === 1) return forms[0];
+  if (last >= 2 && last <= 4) return forms[1];
+  return forms[2];
 }
 
 const levelClass = (l) => ({ success: 'ok', warn: 'warn', error: 'err' }[l] || '');
@@ -261,7 +281,12 @@ els.power.addEventListener('click', async () => {
 });
 
 els.autopilot.addEventListener('change', async () => {
-  await send({ type: 'ui_save_settings', patch: { autopilot: els.autopilot.checked } });
+  const enableAutopilot = !els.autopilot.checked;
+  if (enableAutopilot && !window.confirm('Включить автопубликацию? Агент будет отправлять тексты без вашего подтверждения.')) {
+    els.autopilot.checked = true;
+    return;
+  }
+  await send({ type: 'ui_save_settings', patch: { autopilot: enableAutopilot } });
   refresh();
 });
 

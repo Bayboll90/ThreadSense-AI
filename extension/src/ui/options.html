@@ -62,8 +62,9 @@
 <div id="app">
   <aside>
     <div class="brand">
+      <span class="brandMark" aria-hidden="true">T</span>
+      <span class="brandCopy"><strong>ThreadSense AI</strong><small>Панель управления</small></span>
       <span class="dot" id="navDot"></span>
-      <strong>ThreadSense AI</strong>
     </div>
 
     <!--
@@ -77,11 +78,13 @@
       создавать ощущение, что без них не заработает.
     -->
     <nav id="nav">
-      <button data-tab="start" class="on">Старт</button>
-      <button data-tab="queue">Очередь <span class="pill" id="navQueue">0</span></button>
-      <button data-tab="ai">AI и модели</button>
-      <button data-tab="style">Стиль письма</button>
-      <button data-tab="log">Журнал</button>
+      <div class="navLabel">Основное</div>
+      <button data-tab="start" class="on"><span class="navIcon">⌂</span><span>Главная</span></button>
+      <button data-tab="queue"><span class="navIcon">◫</span><span>Черновики</span><span class="pill" id="navQueue">0</span></button>
+      <button data-tab="ai"><span class="navIcon">✦</span><span>AI-подключение</span></button>
+      <button data-tab="niche"><span class="navIcon">◎</span><span>Моя тема</span></button>
+      <button data-tab="style"><span class="navIcon">✎</span><span>Мой стиль</span></button>
+      <button data-tab="log"><span class="navIcon">≡</span><span>История</span></button>
     </nav>
 
     <button class="advToggle" id="advToggle" aria-expanded="false">
@@ -90,7 +93,6 @@
     </button>
 
     <nav id="navAdv" class="hidden">
-      <button data-tab="niche">Ниша и источники</button>
       <button data-tab="filters">Фильтры</button>
       <button data-tab="momentum">Импульс постов</button>
       <button data-tab="scoring">Отбор веток</button>
@@ -104,23 +106,45 @@
     </nav>
 
     <div class="asideFoot">
-      <div class="tiny dim" id="saveState">сохранено</div>
+      <span class="saveDot"></span>
+      <div class="tiny dim" id="saveState">Сохранено автоматически</div>
     </div>
   </aside>
 
   <main>
     <!-- ------------------------------ Старт ------------------------------ -->
     <section data-tab="start" class="tab on">
-      <h1>Старт</h1>
+      <div class="pageHead">
+        <div>
+          <div class="eyebrow">Центр управления</div>
+          <h1>Всё готово к хорошему старту?</h1>
+          <p>Пройдите четыре понятных шага. Сложные параметры уже настроены выбранным режимом.</p>
+        </div>
+        <button class="ghost helpBtn" data-open-tab="ai">Помочь с настройкой</button>
+      </div>
 
-      <div class="card statusCard">
+      <div class="readiness card" id="readiness">
+        <div class="readinessScore">
+          <div class="progressRing" id="setupRing"><strong id="setupPercent">0%</strong></div>
+          <div><span class="eyebrow">Готовность</span><h2 id="setupTitle">Проверяем настройки…</h2><p id="setupHint">Осталось несколько простых шагов.</p></div>
+        </div>
+        <div class="setupChecklist">
+          <button class="setupItem" data-ready="ai" data-open-tab="ai"><i>1</i><span><strong>Подключить AI</strong><small>Провайдер, ключ и модель</small></span><b>→</b></button>
+          <button class="setupItem" data-ready="profile" data-open-tab="niche"><i>2</i><span><strong>Указать профиль</strong><small>Чтобы агент не отвечал вам</small></span><b>→</b></button>
+          <button class="setupItem" data-ready="topic" data-open-tab="niche"><i>3</i><span><strong>Описать тему</strong><small>Что искать и что пропускать</small></span><b>→</b></button>
+          <button class="setupItem" data-ready="mode"><i>4</i><span><strong>Выбрать темп</strong><small id="setupModeText">Безопасный режим работы</small></span><b>↓</b></button>
+        </div>
+      </div>
+
+      <div class="card statusCard controlCard">
         <div class="row">
           <span class="dot" id="stDot"></span>
           <div class="grow">
+            <span class="tiny dim">Состояние агента</span>
             <strong id="stStatus">—</strong>
             <div class="tiny muted" id="stWhy"></div>
           </div>
-          <label class="switch"><input type="checkbox" id="stPower"><span></span></label>
+          <label class="powerControl"><input type="checkbox" id="stPower"><span><b>Запустить</b><i></i></span></label>
         </div>
         <div id="stAlert" class="alertBox hidden"></div>
       </div>
@@ -134,29 +158,30 @@
         <div class="card stat"><span class="tiny dim">В очереди</span><strong id="stQueue">0</strong></div>
       </div>
 
-      <div class="card">
-        <h3>Режим публикации</h3>
-        <div class="row" style="margin-top:8px">
+      <div class="card automationCard">
+        <div class="row">
           <div class="grow">
-            <strong>Автопилот</strong>
-            <div class="tiny muted">Выключен — черновики ждут подтверждения в очереди. Включен — публикуются сами.</div>
+            <span class="eyebrow">Контроль публикаций</span>
+            <strong>Сначала показывать мне черновики</strong>
+            <div class="tiny muted" id="stAutopilotHint">Рекомендуется новичкам: вы проверяете каждый текст перед отправкой.</div>
           </div>
           <label class="switch"><input type="checkbox" id="stAutopilot"><span></span></label>
         </div>
       </div>
 
-      <div class="card">
-        <h3>Пресет безопасности</h3>
+      <div class="card modeCard" id="modeCard">
+        <div class="sectionTitle"><div><span class="eyebrow">Темп работы</span><h2>Выберите понятный режим</h2></div><span class="recommendedPill">Для старта: Осторожный</span></div>
         <div class="presetGrid" id="presets"></div>
+        <div class="modeNotice">Режим меняет лимиты, интервалы, строгость отбора и защитные паузы одновременно. Автопубликация при этом не включается.</div>
       </div>
 
-      <div class="card">
-        <h3>Прогноз</h3>
+      <div class="card insightCard">
+        <div class="sectionTitle"><div><span class="eyebrow">Что ожидать</span><h2>Прогноз на день</h2></div></div>
         <div id="estimate" class="estimate"></div>
       </div>
 
-      <div class="card">
-        <h3>История</h3>
+      <div class="card insightCard">
+        <div class="sectionTitle"><div><span class="eyebrow">Последние дни</span><h2>История активности</h2></div></div>
         <div id="history" class="history"></div>
       </div>
     </section>
@@ -174,8 +199,8 @@
     </section>
 
     <!-- ------------------------ Остальные вкладки ------------------------ -->
-    <section data-tab="ai" class="tab"><h1>ИИ и модели</h1><div class="fields" id="f-ai"></div></section>
-    <section data-tab="niche" class="tab"><h1>Ниша и источники</h1><div class="fields" id="f-niche"></div></section>
+    <section data-tab="ai" class="tab"><div class="pageHead"><div><div class="eyebrow">Шаг 1</div><h1>AI-подключение</h1><p>Выберите сервис, проверьте ключ и назначьте модели. Остальное можно оставить как есть.</p></div></div><div class="fields" id="f-ai"></div></section>
+    <section data-tab="niche" class="tab"><div class="pageHead"><div><div class="eyebrow">Шаги 2–3</div><h1>Профиль и тема</h1><p>Объясните агенту, кто вы и какие обсуждения действительно имеют значение.</p></div></div><div class="fields" id="f-niche"></div></section>
 
     <section data-tab="filters" class="tab">
       <h1>Фильтры</h1>

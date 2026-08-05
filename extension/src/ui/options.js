@@ -18,6 +18,14 @@ const send = (msg) => chrome.runtime.sendMessage(msg);
 let settings = null;
 let saveTimer = null;
 
+const PRESET_ORDER = ['careful', 'normal', 'boost', 'active'];
+const PRESET_META = {
+  careful: { tag: 'Рекомендуется', desc: 'Максимум пауз и плавный прогрев.' },
+  normal: { tag: 'Баланс', desc: 'Для уже настроенного и живого профиля.' },
+  boost: { tag: 'Под контролем', desc: 'Плотнее, но с умеренным дневным потолком.' },
+  active: { tag: 'Максимум', desc: 'Только для прогретого профиля.' },
+};
+
 async function ensureApiPermission(value) {
   let origin;
   try {
@@ -55,10 +63,11 @@ function setPath(obj, path, value) {
 function scheduleSave(immediate = false) {
   clearTimeout(saveTimer);
   const doSave = async () => {
-    $('#saveState').textContent = 'сохраняю…';
+    $('#saveState').textContent = 'Сохраняем изменения…';
     await send({ type: 'ui_replace_settings', settings });
-    $('#saveState').textContent = 'сохранено';
+    $('#saveState').textContent = 'Сохранено автоматически';
     refreshEstimate();
+    renderReadiness();
   };
   if (immediate) return doSave();
   saveTimer = setTimeout(doSave, 400);
@@ -143,6 +152,7 @@ function buildField(f) {
 
     case 'select': {
       control = document.createElement('select');
+      control.dataset.path = f.path;
       const modelField = /^ai\.model(?:Score|Write|Style)$/.test(f.path);
       const fieldOptions = modelField
         ? (AI_PROVIDERS[settings.ai.provider]?.models || [])
@@ -417,13 +427,52 @@ function renderCircadian() {
 
 function renderPresets(host, current, onPick) {
   host.innerHTML = '';
-  for (const [key, p] of Object.entries(PRESETS)) {
+  for (const key of PRESET_ORDER) {
+    const p = PRESETS[key];
+    if (!p) continue;
+    const meta = PRESET_META[key] || {};
     const b = document.createElement('button');
     b.className = `preset${key === current ? ' on' : ''}`;
-    b.innerHTML = `<strong>${p.label}</strong><span>${p.hint}</span>`;
+    b.innerHTML = `
+      <i class="presetCheck"></i>
+      <span class="presetTag">${escape(meta.tag || '')}</span>
+      <strong>${escape(p.label)}</strong>
+      <span class="presetNumbers">до ${p.limits.perDay} ${ruCount(p.limits.perDay, ['комментария', 'комментариев', 'комментариев'])} · ${p.posting.perDay} ${ruCount(p.posting.perDay, ['поста', 'поста', 'постов'])}</span>
+      <span class="presetDesc">${escape(meta.desc || p.hint)}</span>`;
     b.onclick = () => onPick(key);
     host.appendChild(b);
   }
+}
+
+function readinessState() {
+  if (!settings) return { ai: false, profile: false, topic: false, mode: false };
+  const niche = settings.niche || {};
+  return {
+    ai: !!String(settings.ai?.apiKey || '').trim(),
+    profile: !!String(settings.handle || '').trim(),
+    topic: !!String(niche.description || '').trim()
+      || !!niche.includeKeywords?.length
+      || !!niche.searchQueries?.length,
+    mode: !!PRESETS[settings.preset],
+  };
+}
+
+function renderReadiness() {
+  const state = readinessState();
+  const entries = Object.entries(state);
+  const done = entries.filter(([, ready]) => ready).length;
+  const pct = Math.round((done / entries.length) * 100);
+  $('#setupPercent').textContent = `${pct}%`;
+  $('#setupRing').style.setProperty('--progress', `${pct * 3.6}deg`);
+  $('#setupTitle').textContent = pct === 100 ? 'Базовая настройка завершена' : `Готово ${done} из ${entries.length} шагов`;
+  $('#setupHint').textContent = pct === 100
+    ? 'Можно запускать в ручном режиме и проверить первые черновики.'
+    : 'Нажмите на незавершённый шаг — откроется нужный раздел.';
+  $$('[data-ready]').forEach((el) => el.classList.toggle('done', !!state[el.dataset.ready]));
+  const mode = PRESETS[settings.preset];
+  $('#setupModeText').textContent = mode
+    ? `${mode.label}: до ${mode.limits.perDay} комментариев и ${mode.posting.perDay} ${ruCount(mode.posting.perDay, ['поста', 'поста', 'постов'])}`
+    : 'Безопасный режим работы';
 }
 
 async function refreshStatus() {
@@ -431,7 +480,10 @@ async function refreshStatus() {
   if (!s?.ok) return;
 
   $('#stPower').checked = s.enabled;
-  $('#stAutopilot').checked = s.autopilot;
+  $('#stAutopilot').checked = !s.autopilot;
+  $('#stAutopilotHint').textContent = s.autopilot
+    ? 'Агент публикует автоматически. Включите проверку, чтобы вернуть ручное подтверждение.'
+    : 'Рекомендуется новичкам: вы проверяете каждый текст перед отправкой.';
   $('#navQueue').textContent = s.queued;
   $('#navQueue').className = `pill${s.queued ? ' warn' : ''}`;
 
@@ -474,6 +526,7 @@ async function refreshStatus() {
 
   renderHistory(s.history, s.day, s.dayCount);
   renderEstimate(s.estimate, s);
+  renderReadiness();
 }
 
 function renderEstimate(est, s) {
@@ -992,9 +1045,20 @@ $('#stPower').onchange = async (e) => {
 };
 
 $('#stAutopilot').onchange = (e) => {
-  settings.autopilot = e.target.checked;
+  const enableAutopilot = !e.target.checked;
+  if (enableAutopilot && !window.confirm('Включить автопубликацию? Тексты будут отправляться без вашего подтверждения. Для первого запуска рекомендуем оставить проверку черновиков.')) {
+    e.target.checked = true;
+    return;
+  }
+  settings.autopilot = enableAutopilot;
   scheduleSave(true);
 };
+
+$$('[data-open-tab]').forEach((b) => {
+  b.onclick = () => openTab(b.dataset.openTab);
+});
+
+$('[data-ready="mode"]').onclick = () => $('#modeCard').scrollIntoView({ behavior: 'smooth', block: 'start' });
 
 $('#qRefresh').onclick = renderQueue;
 $('#qShowDone').onclick = (e) => {
@@ -1030,17 +1094,27 @@ function fmtNum(v) {
   return n.toFixed(Math.abs(n) < 0.1 ? 3 : 2);
 }
 
+function ruCount(n, forms) {
+  const value = Math.abs(Number(n)) % 100;
+  const last = value % 10;
+  if (value > 10 && value < 20) return forms[2];
+  if (last === 1) return forms[0];
+  if (last >= 2 && last <= 4) return forms[1];
+  return forms[2];
+}
+
 /* --------------------------------- Init ---------------------------------- */
 
 /** Выбор пресета применяется сразу и перерисовывает все зависимые поля. */
-function onPresetPick(key) {
+async function onPresetPick(key) {
   settings = applyPreset(settings, key);
-  scheduleSave(true);
+  await scheduleSave(true);
   renderPresets($('#presets'), key, onPresetPick);
   if (!$('#wizard').classList.contains('hidden')) {
     renderPresets($('#wizPresets'), key, onPresetPick);
   }
   renderAllTabs();
+  await refreshStatus();
 }
 
 async function init() {
@@ -1056,6 +1130,7 @@ async function init() {
 
   renderAllTabs();
   renderPresets($('#presets'), settings.preset, onPresetPick);
+  renderReadiness();
 
   // Раскрытое состояние расширенных разделов запоминается: кто их однажды
   // открыл, обычно возвращается туда снова.

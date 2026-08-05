@@ -15,6 +15,14 @@
 - получение доступных моделей прямо из API после проверки ключа;
 - импорт и экспорт настроек без API-ключа.
 
+## Интерфейс
+
+Главная страница ведёт нового пользователя по четырём обязательным шагам, а popup оставляет под рукой только состояние, темп, дневной прогресс и безопасный запуск с ручной проверкой черновиков.
+
+![Настройки ThreadSense AI](docs/ui-settings-preview.png)
+
+![Popup ThreadSense AI](docs/ui-popup-preview.png)
+
 ## AI-провайдеры
 
 Поддерживаются нативные API Anthropic и Google Gemini, а также Chat Completions API для OpenAI, DeepSeek, Kimi/Moonshot, xAI, Mistral, Groq, OpenRouter, Together AI и пользовательского OpenAI-совместимого шлюза.

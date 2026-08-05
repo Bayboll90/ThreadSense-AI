@@ -13,28 +13,27 @@
     настройках, живёт на отдельной странице и по умолчанию скрыто —
     расширенные настройки нужны редко, а путают постоянно.
   -->
-  <header>
-    <div class="row">
-      <span class="dot" id="dot"></span>
-      <strong class="grow">ThreadSense AI</strong>
-    </div>
-    <div class="tiny muted" id="statusLine">загрузка…</div>
+  <header class="popupHead">
+    <span class="brandMark" aria-hidden="true">T</span>
+    <div class="grow"><strong>ThreadSense AI</strong><div class="tiny muted">Умный помощник для Threads</div></div>
+    <span class="statusPill"><span class="dot" id="dot"></span><span id="statusLine">загрузка…</span></span>
   </header>
 
   <div id="alert" class="alert hidden"></div>
-  <div id="setup" class="alert warn hidden"></div>
+  <div id="setup" class="setupCard hidden"></div>
 
   <!-- 1. Режим -->
-  <section class="card">
-    <div class="tiny dim label">Режим</div>
+  <section class="card presetSection">
+    <div class="sectionLabel"><span>Темп работы</span><small id="modeHint">Можно изменить в любой момент</small></div>
     <div class="presets" id="presets"></div>
   </section>
 
   <!-- 2. Старт-стоп -->
-  <button class="bigStart" id="power">Запустить</button>
+  <button class="bigStart" id="power"><span>Запустить агента</span><small>Начать безопасно, с черновиками</small></button>
 
   <!-- 3. Что сделано сегодня -->
-  <section class="card stats">
+  <section class="card stats activityCard">
+    <div class="sectionLabel"><span>Сегодня</span><small id="warmupLine"></small></div>
     <div class="statRow">
       <span class="muted">Комментарии</span>
       <strong class="mono right" id="dayCount">0 / 0</strong>
@@ -53,15 +52,14 @@
       <div><span class="tiny dim">потрачено</span><strong class="mono" id="daySpend">$0</strong></div>
     </div>
 
-    <div class="tiny dim" id="warmupLine"></div>
   </section>
 
   <!-- 4. Автопилот -->
-  <section class="card">
+  <section class="card autopilotCard">
     <div class="row">
       <div class="grow">
-        <strong>Автопилот</strong>
-        <div class="tiny muted" id="autopilotHint">Публикует сам, без подтверждения</div>
+        <strong>Проверять черновики</strong>
+        <div class="tiny muted" id="autopilotHint">Вы подтверждаете каждый текст</div>
       </div>
       <label class="switch">
         <input type="checkbox" id="autopilot">
@@ -72,17 +70,17 @@
   </section>
 
   <!-- 5. События -->
-  <section class="log">
+  <section class="log eventCard">
     <div class="row">
-      <strong class="tiny grow">События</strong>
-      <button class="ghost sm" id="openLog">все</button>
+      <strong class="grow">Последние события</strong>
+      <button class="ghost sm" id="openLog">Открыть историю</button>
     </div>
     <div id="logList"></div>
   </section>
 
   <footer>
-    <button class="ghost grow" id="openOptions">Настройки</button>
-    <button class="ghost" id="openThreads">Threads</button>
+    <button class="secondary grow" id="openOptions">Настроить агента</button>
+    <button class="iconBtn" id="openThreads" title="Открыть Threads">↗</button>
   </footer>
 
   <script type="module" src="popup.js"></script>

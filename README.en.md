@@ -15,6 +15,14 @@ Open-source Chrome extension for discovering relevant Threads conversations, dra
 - model discovery using the API key entered by the user;
 - settings import/export with credentials stripped.
 
+## Interface
+
+The control center walks new users through four required steps. The popup keeps only status, pace, daily progress and the safe manual-review launch within reach.
+
+![ThreadSense AI settings](docs/ui-settings-preview.png)
+
+![ThreadSense AI popup](docs/ui-popup-preview.png)
+
 Native adapters are included for Anthropic and Google Gemini. OpenAI, DeepSeek, Kimi/Moonshot, xAI, Mistral, Groq, OpenRouter, Together AI and custom OpenAI-compatible gateways use the Chat Completions protocol.
 
 See the [Russian README](README.md) for installation, architecture, testing, safety and privacy details.
