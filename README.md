@@ -1,3 +1,7 @@
+<div align="center">
+  <img src="docs/banner.png" width="100%" alt="ThreadSense AI — AI-помощник для Threads" />
+</div>
+
 # ThreadSense AI
 
 > [!CAUTION]
