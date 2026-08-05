@@ -720,7 +720,7 @@ pre.raw {
  * ThreadSense 2.1 — beginner-first control center
  * ================================================================== */
 
-#app { grid-template-columns: 256px minmax(0, 1fr); }
+#app { grid-template-columns: 256px minmax(0, 1fr); width: 100%; max-width: 100vw; overflow-x: clip; }
 
 aside {
   padding: 22px 14px 16px;
@@ -753,7 +753,16 @@ nav button.on .navIcon { color: var(--accent-2); }
 .asideFoot { margin-top: auto; display: flex; align-items: center; gap: 7px; }
 .saveDot { width: 6px; height: 6px; background: var(--ok); border-radius: 50%; box-shadow: 0 0 8px rgba(67,211,158,.5); }
 
-main { max-width: 1120px; width: 100%; padding: 42px 48px 90px; }
+main { max-width: 1120px; min-width: 0; width: 100%; padding: 42px 48px 90px; }
+.tab, .fields, .group, .field, .card { min-width: 0; max-width: 100%; }
+.row > .grow { min-width: 0; }
+.field > .row { min-width: 0; flex-wrap: wrap; }
+.field > .row > input { min-width: 180px; flex: 1; }
+.tag, .qHead, .qPost, .qReplies, .qDraft, .logRow > div { min-width: 0; overflow-wrap: anywhere; }
+.tag { max-width: 100%; }
+.tag > span { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.qActions { flex-wrap: wrap; }
+.qActions button { min-width: 0; }
 .pageHead { display: flex; align-items: flex-start; justify-content: space-between; gap: 24px; margin-bottom: 24px; }
 .pageHead h1 { font-size: clamp(25px, 3vw, 34px); letter-spacing: -.035em; line-height: 1.15; margin: 4px 0 8px; }
 .pageHead p { margin: 0; color: var(--text-2); max-width: 620px; font-size: 14px; }
@@ -866,4 +875,9 @@ main { max-width: 1120px; width: 100%; padding: 42px 48px 90px; }
   .controlCard .row { flex-wrap: wrap; }
   .powerControl { width: 100%; margin-top: 5px; }
   .powerControl span { width: 100%; min-width: 0; }
+  .rangeRow { grid-template-columns: minmax(0, 1fr) 58px; }
+  .logRow { grid-template-columns: 6px 70px minmax(0, 1fr); gap: 7px; padding-inline: 8px; }
+  .qActions button { flex: 1 1 120px; }
+  .wizard { padding: 20px 16px; }
+  .wizard .row { flex-wrap: wrap; }
 }

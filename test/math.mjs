@@ -2104,6 +2104,17 @@ test('интерфейсы показывают режимы в порядке �
   }
 });
 
+test('popup не расширяет окно основной кнопкой', async () => {
+  const css = await readFile(join(EXT, 'ui', 'popup.css'), 'utf8');
+  const startRules = [...css.matchAll(/\.bigStart\s*\{([^}]+)\}/g)].map((m) => m[1]).join('\n');
+
+  assert.doesNotMatch(startRules, /(?<!-)width:\s*100%/, 'кнопка старта снова прибавит к ширине padding окна');
+  assert.match(startRules, /(?<!-)width:\s*auto/, 'кнопка старта не растягивается grid-контейнером');
+  assert.match(startRules, /justify-self:\s*stretch/, 'кнопка должна занять доступную, а не фиксированную ширину');
+  assert.match(css, /body\s*\{[^}]*max-width:\s*100vw[^}]*overflow-x:\s*hidden/s,
+    'popup не защищён от горизонтального переполнения');
+});
+
 test('каждый пресет задаёт все пять блоков', () => {
   for (const [name, p] of Object.entries(defaults.PRESETS)) {
     for (const block of ['limits', 'timing', 'scoring', 'filters', 'posting']) {

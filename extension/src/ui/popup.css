@@ -164,7 +164,10 @@ footer {
  * агент уже работает и кнопка теперь останавливает.
  */
 .bigStart {
-  width: 100%;
+  width: auto;
+  min-width: 0;
+  max-width: 100%;
+  justify-self: stretch;
   padding: 13px;
   font-size: 15px;
   font-weight: 600;
@@ -194,13 +197,28 @@ footer {
 /* ThreadSense 2.1 popup */
 body {
   width: 390px;
+  max-width: 100vw;
   padding: 13px;
   gap: 9px;
   max-height: 600px;
+  overflow-x: hidden;
   overflow-y: auto;
 }
 
+body > *,
+.card,
+.popupHead,
+.stats,
+.presets,
+.grid3,
+.log,
+footer {
+  min-width: 0;
+  max-width: 100%;
+}
+
 .popupHead { display: flex; align-items: center; gap: 10px; padding: 2px 2px 4px; }
+.popupHead .grow { min-width: 0; }
 .popupHead strong { font-size: 14px; letter-spacing: -.01em; }
 .brandMark {
   width: 36px; height: 36px; display: grid; place-items: center; flex: none;
@@ -219,16 +237,16 @@ body {
 .setupCard button { width: 100%; background: rgba(255,255,255,.05); }
 
 .presetSection { padding: 14px; }
-.sectionLabel { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; margin-bottom: 9px; }
+.sectionLabel { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; margin-bottom: 9px; min-width: 0; }
 .sectionLabel > span { font-size: 11.5px; font-weight: 700; }
-.sectionLabel small { color: var(--text-3); font-size: 9.5px; }
+.sectionLabel small { color: var(--text-3); font-size: 9.5px; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .presets { grid-template-columns: repeat(2, 1fr); gap: 5px; }
 .presetBtn { min-width: 0; padding: 7px 8px; border-radius: 9px; background: rgba(8,11,18,.56); display: flex; justify-content: space-between; }
 .presetBtn strong { font-size: 10.5px; white-space: nowrap; }
 .presetBtn .tiny { font-size: 8.5px; white-space: nowrap; }
 .presetBtn.on { background: linear-gradient(145deg, rgba(123,108,255,.22), rgba(123,108,255,.08)); box-shadow: inset 0 0 0 1px rgba(123,108,255,.18); }
 
-.bigStart { min-height: 52px; padding: 8px 16px; border-radius: 14px; display: grid; gap: 1px; background: linear-gradient(135deg, var(--accent), #6150df); box-shadow: 0 13px 30px rgba(103,87,238,.24); }
+.bigStart { width: auto; min-width: 0; max-width: 100%; justify-self: stretch; min-height: 52px; padding: 8px 16px; border-radius: 14px; display: grid; gap: 1px; background: linear-gradient(135deg, var(--accent), #6150df); box-shadow: 0 13px 30px rgba(103,87,238,.24); }
 .bigStart span { font-size: 14.5px; }
 .bigStart small { font-size: 9.5px; font-weight: 500; opacity: .72; }
 .bigStart.on { background: var(--bg-3); box-shadow: none; }
@@ -254,11 +272,14 @@ body {
 .logItem { background: rgba(15,20,32,.72); border: 1px solid rgba(255,255,255,.035); }
 
 footer { gap: 8px; padding-top: 11px; }
+footer > * { min-width: 0; }
 footer .secondary { background: var(--bg-3); border-color: var(--line-strong); font-weight: 650; }
 .iconBtn { width: 37px; padding-inline: 0; font-size: 16px; }
 
 @media (max-width: 360px) {
-  body { width: 100vw; padding: 12px; }
+  body { width: 100vw; max-width: 100vw; padding: 12px; }
   .statusPill { max-width: 118px; }
   .presets { grid-template-columns: repeat(2, 1fr); }
+  .presetBtn { padding-inline: 7px; }
+  .presetBtn .tiny { max-width: 72px; overflow: hidden; text-overflow: ellipsis; }
 }

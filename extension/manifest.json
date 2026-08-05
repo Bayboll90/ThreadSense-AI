@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "ThreadSense AI",
-  "version": "2.1.0",
+  "version": "2.1.1",
   "description": "Помогает находить релевантные обсуждения в Threads и готовить ответы в выбранном стиле с помощью подключаемой AI-модели.",
   "minimum_chrome_version": "116",
 
