@@ -11,7 +11,6 @@ export const MSG = {
   CONTENT_READY: 'content_ready',
   LEASE: 'lease',                 // аренда права действовать: одна вкладка на всех
   HEARTBEAT: 'heartbeat',         // пульс для сторожевого таймера
-  INPUT: 'input',                 // проиграть ввод от имени браузера (CDP)
 
   /* bg -> content (команды) */
   CMD_IDLE: 'cmd_idle',           // ничего не делать

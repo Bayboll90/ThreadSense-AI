@@ -320,8 +320,48 @@ if (presetChecks < 50) {
   presetFails++;
 }
 
-console.log(`\nПроверено файлов: ${checked}, ошибок: ${failed + apiFails + enumFails + presetFails}`);
+/* ------------------------------------------------------------------ *
+ * Публичная сборка: manifest, версии и очевидные секреты.
+ * ------------------------------------------------------------------ */
+let releaseFails = 0;
+const manifest = JSON.parse(readFileSync(join(ROOT, 'manifest.json'), 'utf8'));
+const packageJson = JSON.parse(readFileSync(join(ROOT, '..', 'package.json'), 'utf8'));
+if (manifest.version !== packageJson.version) {
+  console.error(`FAIL  версии расходятся: manifest ${manifest.version}, package ${packageJson.version}`);
+  releaseFails++;
+}
+if ([...(manifest.permissions || []), ...(manifest.optional_permissions || [])].includes('debugger')) {
+  console.error('FAIL  публичная сборка не должна запрашивать debugger');
+  releaseFails++;
+}
+if ((manifest.optional_host_permissions || []).includes('http://*/*')) {
+  console.error('FAIL  удалённый custom API нельзя разрешать по открытому HTTP');
+  releaseFails++;
+}
+
+const secretPatterns = [
+  /sk-[A-Za-z0-9_-]{16,}/,
+  /sk-ant-[A-Za-z0-9_-]{12,}/,
+  /AIza[0-9A-Za-z_-]{20,}/,
+  /gh[pousr]_[A-Za-z0-9]{20,}/,
+  /-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----/,
+];
+for (const file of files) {
+  const source = readFileSync(file, 'utf8');
+  if (!secretPatterns.some((pattern) => pattern.test(source))) continue;
+  console.error(`FAIL  возможный секрет в ${relative(ROOT, file)}`);
+  releaseFails++;
+}
+
+const optionsHtml = readFileSync(join(ROOT, 'src/ui/options.html'), 'utf8');
+if ((optionsHtml.match(/<section class="wizStep[^>]*data-step="\d+"/g) || []).length !== 4) {
+  console.error('FAIL  мастер первого запуска должен содержать четыре шага');
+  releaseFails++;
+}
+
+console.log(`\nПроверено файлов: ${checked}, ошибок: ${failed + apiFails + enumFails + presetFails + releaseFails}`);
 if (!apiFails) console.log(`Сверено обращений между модулями: ${exportsByModule.size} модулей`);
 if (!enumFails) console.log(`Сверено обращений к перечням: ${enumUses} в ${enums.size} перечнях`);
 if (!presetFails) console.log(`Сверено настроек пресетов: ${presetChecks} в ${Object.keys(PRESETS).length} режимах`);
-process.exit(failed + apiFails + enumFails + presetFails ? 1 : 0);
+if (!releaseFails) console.log('Публичный manifest, версии и секреты: проверено');
+process.exit(failed + apiFails + enumFails + presetFails + releaseFails ? 1 : 0);

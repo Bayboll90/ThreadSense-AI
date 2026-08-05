@@ -74,6 +74,8 @@ await test('OpenAI-совместимые провайдеры использу�
   );
   assert.equal(request.json.max_tokens, 120);
   assert.equal(request.json.max_completion_tokens, undefined);
+  assert.equal(request.json.presence_penalty, undefined);
+  assert.equal(request.json.frequency_penalty, undefined);
   assert.match(request.headers.Authorization, /^Bearer /);
 });
 
@@ -116,6 +118,18 @@ await test('Gemini generateContent и список моделей работаю
     () => listModels({ ...base, ...providerDefaults('gemini'), apiKey: base.apiKey }),
   );
   assert.deepEqual(listed.result.models, ['gemini-a']);
+});
+
+await test('Gemini 3.5 и 3.6 не получают устаревшие sampling-параметры', async () => {
+  const { request } = await capture(
+    { candidates: [{ content: { parts: [{ text: 'yes' }] } }], usageMetadata: {} },
+    () => chat({ ...base, ...providerDefaults('gemini'), apiKey: base.apiKey }, {
+      model: 'gemini-3.6-flash', messages: [{ role: 'user', content: 'test' }],
+    }),
+  );
+  assert.equal(request.json.generationConfig.temperature, undefined);
+  assert.equal(request.json.generationConfig.topP, undefined);
+  assert.equal(request.json.generationConfig.maxOutputTokens, 120);
 });
 
 console.log(`\nПроверено провайдеров: ${passed}`);

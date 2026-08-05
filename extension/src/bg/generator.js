@@ -21,7 +21,10 @@ import { clamp } from '../common/rng.js';
 
 function withCustomPrompt(base, settings, key) {
   const extra = String(settings?.ai?.promptOverrides?.[key] || '').trim();
-  return extra ? `${base}\n\nДополнительные инструкции пользователя:\n${extra}` : base;
+  if (!extra) return base;
+  return settings?.ai?.promptMode === 'replace'
+    ? extra
+    : `${base}\n\nДополнительные инструкции пользователя:\n${extra}`;
 }
 
 /* ------------------------------------------------------------------ *

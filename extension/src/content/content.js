@@ -576,10 +576,6 @@
     const hello = await send({ type: MSG.CONTENT_READY, url: location.href });
     if (hello?.tickSec) tickSec = hello.tickSec;
 
-    // Чем набирать и кликать, решается один раз при запуске: спрашивать фон
-    // на каждый символ дороже самого символа.
-    TA.input?.configure(hello?.trustedInput);
-
     // Плашка на странице — только если её прямо попросили. Прежнее «показывать,
     // пока не запретили» и оставило агенту опознавательный знак в DOM сайта.
     TA.overlay.configure(hello?.overlay);

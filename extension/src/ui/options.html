@@ -15,6 +15,7 @@
       <span class="on" data-step="1">1</span>
       <span data-step="2">2</span>
       <span data-step="3">3</span>
+      <span data-step="4">4</span>
     </div>
 
     <section class="wizStep" data-step="1">
@@ -49,6 +50,15 @@
         <button class="ghost" id="wizSkipTrain">Пропустить</button>
       </div>
       <div id="wizTrainResult" class="tiny muted"></div>
+    </section>
+
+    <section class="wizStep hidden" data-step="4">
+      <h2>О чём ваш профиль</h2>
+      <p class="muted">Опишите тему обычными словами: что вам интересно, для кого вы пишете и какие обсуждения нужно пропускать.</p>
+      <label>Тема и аудитория
+        <textarea id="wizTopic" rows="5" placeholder="Например: семейная фотография для начинающих; практические съёмки, свет и обработка; без рекламы курсов и политики"></textarea>
+      </label>
+      <div class="tiny muted">Без этого описания агент не запустится: пустая тема делает отбор случайным.</div>
     </section>
 
     <div class="wizNav">

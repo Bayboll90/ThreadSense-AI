@@ -76,9 +76,7 @@ function paint(s) {
     `коммент. <b>${s.dayCount || 0}</b> из ${s.dayLimit || 0}`,
     `посты <b>${s.dayPosts || 0}</b>${s.postLimit ? ` из ${s.postLimit}` : ''}`,
     `лайки <b>${s.dayLikes || 0}</b>`,
-  ].join(' · ') + (s.trustedInput?.attachedTab
-    ? ''
-    : '<div class="quiet">ввод: обычные события</div>');
+  ].join(' · ');
 
   const halt = $('halt');
   if (s.halt) {

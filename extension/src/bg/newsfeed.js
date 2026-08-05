@@ -16,6 +16,7 @@
  */
 
 import { hash } from '../common/text.js';
+import { validateBaseUrl } from '../common/providers.js';
 
 const UA_TIMEOUT_MS = 12000;
 
@@ -236,6 +237,8 @@ export function dedupe(items, threshold = 0.5) {
 async function fromSite(settings) {
   const base = String(settings.posting?.sourceUrl || '').replace(/\/$/, '');
   if (!base) throw new Error('адрес источника не задан');
+  const safeUrl = validateBaseUrl(base);
+  if (!safeUrl.ok) throw new Error(safeUrl.error);
 
   const token = settings.posting?.sourceToken || '';
   const url = `${base}/api/feed/items?limit=25`;

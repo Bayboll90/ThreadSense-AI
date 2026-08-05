@@ -97,7 +97,7 @@
    * Число шагов зависит от дистанции: короткие перемещения не требуют
    * тридцати промежуточных событий.
    */
-  async function moveTo(x, y, { speed = 1, pressed = false } = {}) {
+  async function moveTo(x, y, { speed = 1 } = {}) {
     const from = { ...cursor };
     const to = { x, y };
     const dist = Math.hypot(to.x - from.x, to.y - from.y);
@@ -147,22 +147,6 @@
       // Изредка курсор запинается — человек отвлёкся на полсекунды.
       const stumble = chance(0.04) ? uniform(60, 220) : 0;
       track.push({ ...at, waitMs: stumble + (totalMs / steps) * uniform(0.6, 1.5) });
-    }
-
-    if (TA.input?.available()) {
-      const ok = await TA.input.play(track.map((p) => ({
-        op: 'move',
-        x: Math.round(p.x),
-        y: Math.round(p.y),
-        pressed,
-        waitMs: Math.round(p.waitMs),
-      })));
-      if (ok) {
-        cursor = to;
-        return;
-      }
-      // Отказ — доигрываем прежним путём, чтобы движение не оборвалось на
-      // середине: страница уже ждёт курсор у цели.
     }
 
     for (const p of track) {
@@ -222,30 +206,6 @@
 
     // Длительность удержания клавиши у людей — около 60-140 мс.
     const holdMs = Math.round(clamp(gauss(95, 30), 45, 220));
-
-    /*
-     * Доверенный клик.
-     *
-     * Ради него всё и затевалось: у события, рождённого браузером, стоит
-     * `isTrusted: true`, и обработчику на странице нечем отличить его от
-     * настоящего нажатия. Наведение (`mouseover`, `pointerover`) браузер
-     * порождает сам при движении курсора — досылать их руками не нужно, а
-     * лишние синтетические события рядом с доверенными выглядели бы страннее,
-     * чем их отсутствие.
-     */
-    if (TA.input?.available()) {
-      const x = Math.round(p.x);
-      const y = Math.round(p.y);
-      const ok = await TA.input.play([
-        { op: 'move', x, y, waitMs: uniform(20, 90) },
-        { op: 'down', x, y, waitMs: holdMs },
-        { op: 'up', x, y },
-      ]);
-      if (ok) {
-        if (settle) await sleep(uniform(120, 420));
-        return true;
-      }
-    }
 
     firePointer('pointerover', p.x, p.y);
     fire('mouseover', p.x, p.y);

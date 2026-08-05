@@ -15,7 +15,10 @@ import { postSystem, postUser, threadSystem, threadUser, guideSystem, guideUser 
 
 function withCustomPrompt(base, settings) {
   const extra = String(settings?.ai?.promptOverrides?.post || '').trim();
-  return extra ? `${base}\n\nДополнительные инструкции пользователя:\n${extra}` : base;
+  if (!extra) return base;
+  return settings?.ai?.promptMode === 'replace'
+    ? extra
+    : `${base}\n\nДополнительные инструкции пользователя:\n${extra}`;
 }
 import { humanize, smartTruncate } from './humanizer.js';
 import { POST_KINDS, partsFor, lenLimits } from './postplan.js';

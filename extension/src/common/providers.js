@@ -7,7 +7,7 @@
 export const AI_PROVIDERS = Object.freeze({
   openai: {
     label: 'OpenAI', protocol: 'openai', baseUrl: 'https://api.openai.com/v1',
-    models: ['gpt-5.2', 'gpt-5-mini', 'gpt-4o-mini'],
+    models: ['gpt-5.6-luna', 'gpt-5.6-terra', 'gpt-5.6-sol'],
   },
   anthropic: {
     label: 'Anthropic', protocol: 'anthropic', baseUrl: 'https://api.anthropic.com/v1',
@@ -23,7 +23,7 @@ export const AI_PROVIDERS = Object.freeze({
   },
   gemini: {
     label: 'Google Gemini', protocol: 'gemini', baseUrl: 'https://generativelanguage.googleapis.com/v1beta',
-    models: ['gemini-3.6-flash', 'gemini-3.5-flash', 'gemini-2.5-flash'],
+    models: ['gemini-3.6-flash', 'gemini-3.5-flash', 'gemini-3.5-flash-lite', 'gemini-2.5-flash'],
   },
   xai: {
     label: 'xAI / Grok', protocol: 'openai', baseUrl: 'https://api.x.ai/v1',
@@ -60,6 +60,23 @@ export function providerOf(cfg = {}) {
 
 export function normalizeBaseUrl(value) {
   return String(value || '').trim().replace(/\/+$/, '');
+}
+
+/**
+ * API-ключ разрешено отправлять только по HTTPS. Незашифрованный HTTP
+ * оставлен исключительно для сервера на этом же компьютере.
+ */
+export function validateBaseUrl(value) {
+  try {
+    const url = new URL(normalizeBaseUrl(value));
+    if (url.username || url.password) return { ok: false, error: 'Логин и пароль нельзя указывать в адресе API' };
+    if (url.protocol === 'https:') return { ok: true, url };
+    const local = ['localhost', '127.0.0.1', '[::1]'].includes(url.hostname);
+    if (url.protocol === 'http:' && local) return { ok: true, url };
+    return { ok: false, error: 'Удалённый API должен использовать HTTPS; HTTP разрешён только для localhost' };
+  } catch {
+    return { ok: false, error: 'Некорректный адрес API' };
+  }
 }
 
 export function providerDefaults(id) {

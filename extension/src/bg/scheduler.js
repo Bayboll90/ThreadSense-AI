@@ -230,7 +230,10 @@ export function pickAction(settings, session) {
   if (views >= Math.max(1, viewsPerComment)) return 'comment';
 
   const wComment = 1;
-  const wLike = likes < likesPerComment ? Math.max(0, likesPerComment) : 0;
+  // В режиме проверки черновиков агент не совершает никаких социальных
+  // действий без подтверждения. Лайк нельзя положить в очередь, поэтому он
+  // появляется только вместе с явно включённым автопилотом.
+  const wLike = settings.autopilot && likes < likesPerComment ? Math.max(0, likesPerComment) : 0;
   const wBrowse = Math.max(1, viewsPerComment - likes);
 
   const total = wComment + wLike + wBrowse;

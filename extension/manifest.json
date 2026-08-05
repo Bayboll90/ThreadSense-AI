@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "ThreadSense AI",
-  "version": "2.1.1",
+  "version": "2.2.0",
   "description": "Помогает находить релевантные обсуждения в Threads и готовить ответы в выбранном стиле с помощью подключаемой AI-модели.",
   "minimum_chrome_version": "116",
 
@@ -10,8 +10,7 @@
     "alarms",
     "tabs",
     "notifications",
-    "scripting",
-    "debugger"
+    "scripting"
   ],
 
   "host_permissions": [
@@ -38,7 +37,6 @@
 
   "optional_host_permissions": [
     "https://*/*",
-    "http://*/*",
     "http://localhost/*",
     "http://127.0.0.1/*"
   ],
@@ -61,7 +59,6 @@
         "src/content/lib/rng.js",
         "src/content/lib/keepalive.js",
         "src/content/lib/lock.js",
-        "src/content/lib/input.js",
         "src/content/selectors.js",
         "src/content/buttons.js",
         "src/content/nested.js",

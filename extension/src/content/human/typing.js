@@ -98,27 +98,8 @@
     return 'Unidentified';
   }
 
-  /**
-   * Вставить один символ так, чтобы редактор это заметил.
-   *
-   * Доверенный путь короче всего остального файла: браузер получает нажатие
-   * клавиши и дальше сам делает всё, что здесь воспроизводится руками —
-   * `keydown`, `beforeinput`, вставку в Lexical, `input`, `keyup`. Обходной
-   * `execCommand` при этом не нужен: он был нужен ровно потому, что своего
-   * ввода у страницы нет.
-   */
+  /** Вставить один символ так, чтобы редактор это заметил. */
   async function insertChar(el, ch) {
-    if (TA.input?.available()) {
-      const ok = await TA.input.play([{
-        op: 'key',
-        text: ch === '\n' ? '\r' : ch,
-        key: ch === '\n' ? 'Enter' : ch,
-        code: codeFor(ch),
-        vk: TA.input.vkFor(ch),
-      }]);
-      if (ok) return;
-    }
-
     keyEvent(el, 'keydown', ch);
 
     el.dispatchEvent(new InputEvent('beforeinput', {
@@ -160,13 +141,6 @@
 
   /** Удалить символ слева от каретки. */
   async function backspace(el) {
-    if (TA.input?.available()) {
-      const ok = await TA.input.play([{
-        op: 'press', key: 'Backspace', code: 'Backspace', vk: 8,
-      }]);
-      if (ok) return;
-    }
-
     keyEvent(el, 'keydown', 'Backspace');
     el.dispatchEvent(new InputEvent('beforeinput', {
       bubbles: true, cancelable: true, composed: true, inputType: 'deleteContentBackward',

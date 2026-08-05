@@ -58,7 +58,7 @@ function renderPresets(current) {
     b.className = `presetBtn${key === current ? ' on' : ''}`;
     b.innerHTML = `
       <strong>${p.label}</strong>
-      <span class="tiny">${p.limits.perDay} комм. · ${p.posting.perDay} ${ruCount(p.posting.perDay, ['пост', 'поста', 'постов'])}</span>`;
+      <span class="tiny">${p.limits.perDay} комм. · ${status.postingEnabled ? `посты до ${p.posting.perDay}` : 'посты выкл.'}</span>`;
     b.title = p.hint;
     b.onclick = async () => {
       if (busy) return;
@@ -79,27 +79,28 @@ function render(s) {
   els.autopilot.checked = !s.autopilot;
   els.autopilotHint.textContent = s.autopilot
     ? 'Автопубликация включена — тексты уходят без подтверждения'
-    : 'Вы подтверждаете каждый текст перед отправкой';
+    : 'Черновики ждут подтверждения; лайки в этом режиме отключены';
 
   /* Старт-стоп */
 
   els.power.innerHTML = s.enabled
     ? '<span>Остановить агента</span><small>Текущая сессия будет завершена</small>'
-    : '<span>Запустить агента</span><small>Начать безопасно, с черновиками</small>';
+    : '<span>Запустить агента</span><small>Только чтение и черновики, без лайков</small>';
   els.power.className = `bigStart${s.enabled ? ' on' : ''}`;
-  els.power.disabled = !s.hasKey;
+  els.power.disabled = !s.enabled && !s.setupReady;
 
   /* Что мешает начать — отдельно и понятным языком. */
 
   const missing = [];
   if (!s.hasKey) missing.push('ключ API');
+  else if (!s.aiVerified) missing.push('успешная проверка AI');
   if (!s.handle) missing.push('свой хэндл в Threads');
   if (!s.topicReady) missing.push('описание темы');
 
   if (missing.length) {
     els.setup.classList.remove('hidden');
-    const completed = 3 - missing.length;
-    els.setup.innerHTML = `<div class="setupTop"><span class="setupIcon">${completed}/3</span><div><strong>Завершите первоначальную настройку</strong><p>Не хватает: ${escapeHtml(missing.join(', '))}.</p></div></div>`;
+    const completed = 4 - missing.length;
+    els.setup.innerHTML = `<div class="setupTop"><span class="setupIcon">${Math.max(0, completed)}/4</span><div><strong>Завершите первоначальную настройку</strong><p>Не хватает: ${escapeHtml(missing.join(', '))}.</p></div></div>`;
     const btn = document.createElement('button');
     btn.className = 'sm';
     btn.textContent = 'Продолжить настройку →';
@@ -117,9 +118,12 @@ function render(s) {
   if (s.halt) {
     dotClass += ' err';
     status = HALT_LABEL[s.halt.reason] || s.halt.reason;
-  } else if (!s.hasKey) {
+  } else if (!s.aiVerified) {
     dotClass += ' warn';
-    status = 'нужен ключ API';
+    status = s.hasKey ? 'проверьте AI' : 'нужен ключ API';
+  } else if (!s.setupReady) {
+    dotClass += ' warn';
+    status = 'нужно завершить настройку';
   } else if (!s.enabled) {
     status = 'остановлен';
   } else if (s.breaker === 'open') {
@@ -173,7 +177,7 @@ function render(s) {
   els.dayBar.style.width = `${pct}%`;
   els.dayBar.parentElement.className = `bar${pct >= 100 ? ' warn' : ''}`;
 
-  els.dayPosts.textContent = `${s.dayPosts || 0} / ${s.postLimit || 0}`;
+  els.dayPosts.textContent = s.postingEnabled ? `${s.dayPosts || 0} / ${s.postLimit || 0}` : 'выключены';
   const pPct = s.postLimit ? Math.min(100, ((s.dayPosts || 0) / s.postLimit) * 100) : 0;
   els.postBar.style.width = `${pPct}%`;
 

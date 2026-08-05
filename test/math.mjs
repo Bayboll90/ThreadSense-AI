@@ -41,6 +41,8 @@ const funnel = await load('bg/funnel.js');
 const cardimage = await load('bg/cardimage.js');
 const learning = await load('bg/learning.js');
 const PAGES = await load('common/pages.js');
+const providers = await load('common/providers.js');
+const settingsValidator = await load('common/settings-validator.js');
 
 let passed = 0;
 let failed = 0;
@@ -397,7 +399,7 @@ test('единичные сбои не поднимают тревогу', () =>
   const s = structuredClone(S);
   const st = structuredClone(ST);
 
-  for (let i = 0; i < 2; i++) {
+  for (let i = 0; i < s.safety.technicalStreakLimit - 1; i++) {
     const v = recovery.onTechnicalFailure(st, s, skip.SKIP.NO_REPLY_BUTTON);
     assert.equal(v.step, recovery.STEP.SKIP_POST, 'до порога просто пропускаем пост');
   }
@@ -1422,7 +1424,7 @@ test('разброс слота детерминирован', () => {
 
 test('дневной лимит закрывает публикации независимо от слотов', () => {
   const st = { postedSlots: { [postplan.moscowNow().key]: [0, 1, 2, 3, 4] } };
-  const r = postplan.slotDue({ ...P, perDay: 5 }, st);
+  const r = postplan.slotDue({ ...P, perDay: 5, startAfterDay: 0 }, st);
   assert.equal(r.due, false);
   assert.match(r.why, /лимит/);
 });
@@ -1957,6 +1959,74 @@ test('публичные пресеты не включают автопилот
   }
 });
 
+test('новая публичная установка не совершает действий без явного согласия', () => {
+  assert.equal(S.enabled, false);
+  assert.equal(S.autopilot, false);
+  assert.equal(S.posting.enabled, false);
+  assert.equal(S.hosting.enabled, false);
+  assert.equal(S.stealth, undefined);
+  assert.equal(S.ai.connectionVerified, false);
+});
+
+test('ручной режим никогда не выбирает лайк', () => {
+  const s = structuredClone(S);
+  s.autopilot = false;
+  s.limits.viewsPerComment = 100;
+  s.limits.likesPerComment = 100;
+  const session = { idle: false, plannedActions: 5, doneActions: 0, browseCount: 0, likeCount: 0 };
+  for (let i = 0; i < 500; i++) assert.notEqual(scheduler.pickAction(s, session), 'like');
+  s.autopilot = true;
+  assert.ok(new Set(Array.from({ length: 500 }, () => scheduler.pickAction(s, session))).has('like'));
+});
+
+test('удалённый custom API требует HTTPS, локальный HTTP разрешён', () => {
+  assert.equal(providers.validateBaseUrl('https://gateway.example.com/v1').ok, true);
+  assert.equal(providers.validateBaseUrl('http://localhost:11434/v1').ok, true);
+  assert.equal(providers.validateBaseUrl('http://127.0.0.1:8000/v1').ok, true);
+  assert.equal(providers.validateBaseUrl('http://gateway.example.com/v1').ok, false);
+  assert.equal(providers.validateBaseUrl('https://user:pass@gateway.example.com/v1').ok, false);
+});
+
+test('импорт чистит секреты, неизвестные ключи, типы и опасные диапазоны', () => {
+  const current = structuredClone(S);
+  current.ai.apiKey = 'current-secret';
+  current.posting.sourceToken = 'current-source-secret';
+  const imported = settingsValidator.sanitizeImportedSettings({
+    enabled: true,
+    autopilot: true,
+    unknown: { injected: true },
+    ai: {
+      apiKey: 'file-secret', connectionVerified: true, dailyBudgetUsd: -10,
+      baseUrl: 'http://remote.example/v1',
+      pricing: { 'custom/model': { input: 2, cached: 1, output: 5 }, '../bad key': { input: 9 } },
+    },
+    posting: { sourceToken: 'file-token', perDay: 999, intervalHours: -2 },
+    limits: { perDay: 'unlimited' },
+  }, current);
+  assert.equal(imported.enabled, false);
+  assert.equal(imported.autopilot, false);
+  assert.equal(imported.ai.connectionVerified, false);
+  assert.equal(imported.ai.apiKey, 'current-secret');
+  assert.equal(imported.posting.sourceToken, 'current-source-secret');
+  assert.equal(imported.ai.baseUrl, S.ai.baseUrl);
+  assert.equal(imported.ai.dailyBudgetUsd, 0.05);
+  assert.equal(imported.posting.perDay, 20);
+  assert.equal(imported.posting.intervalHours, 0.5);
+  assert.equal(imported.limits.perDay, S.limits.perDay);
+  assert.deepEqual(imported.ai.pricing['custom/model'], { input: 2, cached: 1, output: 5 });
+  assert.equal(imported.ai.pricing['../bad key'], undefined);
+  assert.equal('unknown' in imported, false);
+});
+
+test('универсальные промпты не навязывают техническую нишу', () => {
+  const s = structuredClone(S);
+  s.niche.description = 'семейная фотография и работа со светом';
+  const post = prompts.postSystem(s, postplan.POST_KINDS.tip, { min: 90, max: 180 });
+  const thread = prompts.threadSystem(s, postplan.POST_KINDS.guide, 3, { min: 100, max: 180 });
+  assert.doesNotMatch(post, /ИИ-инструмент|разработчик|Claude|MCP/i);
+  assert.doesNotMatch(thread, /ИИ-инструмент|разработчик|Claude|MCP/i);
+});
+
 test('пресет оставляет автопилот выключенным при применении', () => {
   const base = JSON.parse(JSON.stringify(S));
   base.autopilot = false;
@@ -2012,7 +2082,7 @@ test('пресет накрывает всё, что настраивалось 
       'breakMeanMinutes', 'breakMinMinutes', 'breakMaxMinutes'],
     scoring: ['minScore', 'minRelevance', 'minThreadTopic', 'maxBatchesPerScan'],
     filters: ['maxAgeHours', 'skipCold', 'hotOnly', 'skipMedia'],
-    posting: ['enabled', 'perDay', 'intervalHours', 'windowFromHour', 'windowToHour',
+    posting: ['perDay', 'intervalHours', 'windowFromHour', 'windowToHour',
       'jitterMin', 'maxSimilarity', 'minNovelty'],
     safety: ['technicalStreakLimit', 'breakerThreshold', 'shadowFailThreshold',
       'onShadowFailPauseHours', 'onBlockPauseHours', 'recheckEnabled', 'vanishedLimit',
@@ -2226,8 +2296,9 @@ test('одна пропажа не останавливает агента', () 
 });
 
 test('серия пропаж подряд останавливает агента', () => {
-  let st = { published: [{ url: 'a' }, { url: 'b' }, { url: 'c' }], vanished: 0 };
-  for (const u of ['a', 'b', 'c']) st = survival.recordRecheck(st, u, false);
+  const urls = Array.from({ length: S.safety.vanishedLimit }, (_, i) => `gone-${i}`);
+  let st = { published: urls.map((url) => ({ url })), vanished: 0 };
+  for (const url of urls) st = survival.recordRecheck(st, url, false);
   assert.equal(st.vanished, S.safety.vanishedLimit);
   assert.equal(survival.shouldHalt(st, S), true);
 });
@@ -4117,6 +4188,7 @@ test('пологая кривая держит первую неделю поч�
 
 test('свои посты начинаются не раньше назначенного дня', () => {
   const s = defaults.applyPreset(structuredClone(defaults.DEFAULTS), 'careful');
+  s.posting.enabled = true;
   const state = (day) => ({
     postedSlots: {},
     restartDate: new Date(Date.now() - day * 86400000).toISOString().slice(0, 10),
@@ -4144,6 +4216,29 @@ test('длина комментария разыгрывается, а не по
 
   assert.equal(labels.size, 3, 'должны встречаться все три длины реплики');
   assert.ok(targets.size > 30, `цель должна плавать, а вышло ${targets.size} различных значений`);
+});
+
+test('schema v16 migration stops an older active installation safely', () => {
+  const settings = defaults.deepMerge(defaults.DEFAULTS, {
+    version: 15,
+    enabled: true,
+    autopilot: true,
+    onboarded: true,
+    ai: { connectionVerified: true },
+    posting: { enabled: true },
+    hosting: { enabled: true },
+    stealth: { trustedInput: true },
+  });
+
+  defaults.migrateSettings(settings, 15);
+  assert.equal(settings.version, 16);
+  assert.equal(settings.enabled, false);
+  assert.equal(settings.autopilot, false);
+  assert.equal(settings.onboarded, false);
+  assert.equal(settings.ai.connectionVerified, false);
+  assert.equal(settings.posting.enabled, false);
+  assert.equal(settings.hosting.enabled, false);
+  assert.equal(settings.stealth, undefined);
 });
 
 await Promise.all(pending);

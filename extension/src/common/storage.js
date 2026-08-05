@@ -9,6 +9,7 @@
 import {
   DEFAULTS, DEFAULT_STATE, DEFAULT_QUEUE, SCHEMA_VERSION, deepMerge, migrateSettings,
 } from './defaults.js';
+import { sanitizeImportedSettings } from './settings-validator.js';
 
 const K_SETTINGS = 'settings';
 const K_STATE = 'state';
@@ -53,6 +54,12 @@ export async function replaceSettings(obj) {
   cache.settings = next;
   await rawSet(K_SETTINGS, next);
   return next;
+}
+
+/** Импорт из недоверенного JSON с проверкой типов, диапазонов и секретов. */
+export async function importSettings(obj) {
+  const current = await getSettings(true);
+  return replaceSettings(sanitizeImportedSettings(obj, current));
 }
 
 // Сама миграция живёт в defaults.js рядом со схемой: там она остаётся чистой

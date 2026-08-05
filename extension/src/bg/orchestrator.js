@@ -393,6 +393,7 @@ export async function decide(report, ctx) {
   }
 
   if (action === 'like') {
+    if (!settings.autopilot) return browseCommand(settings, 'ручной режим: читаем без лайков');
     await updateState((s) => {
       s.session = { ...s.session, likeCount: (s.session.likeCount || 0) + 1 };
       return s;
@@ -1039,7 +1040,7 @@ function browseCommand(settings, why) {
     cmd: MSG.CMD_BROWSE,
     intent: 'read',
     scrolls: randInt(3, 10),
-    maxLikes: chance(settings.limits.likeWithoutCommentChance) ? 1 : 0,
+    maxLikes: settings.autopilot && chance(settings.limits.likeWithoutCommentChance) ? 1 : 0,
     why,
   };
 }

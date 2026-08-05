@@ -10,11 +10,15 @@
 
 These tests need no account, browser profile or API key.
 
+The regression suite also asserts public-safe defaults, manual-mode behavior, credential-free imports, secure custom endpoints and the schema migration that stops an older active installation before the new version can run.
+
 ## Local browser scenarios
 
 Live browser probes are intentionally excluded from the public repository because they can contain account-specific selectors, logs and captured content. If you create one locally, use a dedicated test account and disposable profile. Never commit the profile, cookies, storage dumps, logs or `.env` file.
 
 Live scenarios can read or type into Threads and may consume API tokens. Review each script before running it; publishing actions must remain disabled unless the operator explicitly intends a controlled test.
+
+The project was previously exercised in a controlled real Threads run, including feed reading, selector diagnostics, drafting and publishing flows. That evidence demonstrates that the browser interaction chain worked at that point in time; it is not an anti-ban claim. The account used for the extended run was later permanently suspended, so the public release deliberately does not ship the former activity profile and does not repeat a live publishing test on somebody else's account.
 
 ## AI provider checks
 

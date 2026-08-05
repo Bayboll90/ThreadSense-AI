@@ -10,7 +10,7 @@
 import { MSG, HALT } from '../common/messages.js';
 import { PAGE_LABEL, pageKindOf } from '../common/pages.js';
 import {
-  getSettings, setSettings, replaceSettings, getState, updateState,
+  getSettings, setSettings, replaceSettings, importSettings, getState, updateState,
   resetState, pushLog, getLog, clearLog, todayKey, daysSince,
 } from '../common/storage.js';
 import { decide, handleGuardAlert } from './orchestrator.js';
@@ -29,7 +29,6 @@ import { listQueue, updateItem, removeItem, pruneQueue, pendingCount, getItem } 
 import { recordAngle } from './safety.js';
 import { setBadge, notify } from './notify.js';
 import { handleLease, onTabClosed, leaseInfo, clearLease } from './lease.js';
-import { playInput, detachInput, ensureInput, debuggerAvailable, debuggerState } from './input.js';
 import {
   startWatchdog, heartbeat, forgetTab, checkPulse, pulseInfo, WATCHDOG_ALARM,
 } from './watchdog.js';
@@ -304,8 +303,6 @@ async function ensureWorkingTab(settings) {
 chrome.tabs.onRemoved.addListener((tabId) => {
   onTabClosed(tabId);
   forgetTab(tabId);
-  // И отпускаем отладчик: держать его за закрытой вкладкой не за что.
-  detachInput(tabId);
 });
 
 async function refreshBadge() {
@@ -342,19 +339,6 @@ async function handle(msg, sender) {
       const settings = await getSettings();
 
       /*
-       * Отладчик подключается сейчас, а не при первом клике.
-       *
-       * Его плашка занимает полосу сверху и уменьшает высоту видимой области.
-       * Подключись он посреди работы — страница поехала бы вниз ровно в тот
-       * момент, когда курсор уже нацелен на кнопку, и клик ушёл бы мимо.
-       * Заодно это честный ответ странице: подключение либо есть, либо его
-       * не будет, и незачем выяснять это на первом символе.
-       */
-      const trusted = !!settings.stealth?.trustedInput
-        && debuggerAvailable()
-        && await ensureInput(sender?.tab?.id);
-
-      /*
        * Окно состояния открываем и отсюда.
        *
        * `onStartup` для этого недостаточно: после выката Chrome закрывается
@@ -370,32 +354,11 @@ async function handle(msg, sender) {
         ok: true,
         tickSec: settings.timing.tickSec,
         overlay: settings.ui.overlay,
-        // Страница должна знать заранее, чем ей набирать и кликать: спрашивать
-        // об этом фон на каждый символ дороже, чем один флаг при запуске.
-        trustedInput: trusted,
       };
     }
 
     case MSG.LEASE:
       return handleLease(msg, sender);
-
-    /*
-     * Ввод от имени браузера.
-     *
-     * Страница считает траекторию и паузы — она одна знает геометрию и что
-     * куда нажимать, — а порождает события фон, потому что отладчик доступен
-     * только ему. Если доверенный ввод выключен настройкой или отладчик
-     * отказал, отвечаем честным `ok: false`: страница вернётся к своим
-     * событиям и работа не встанет.
-     */
-    case MSG.INPUT: {
-      const settings = await getSettings();
-      if (!settings.stealth?.trustedInput) return { ok: false, error: 'доверенный ввод выключен' };
-
-      const tabId = sender?.tab?.id;
-      if (!tabId) return { ok: false, error: 'нет вкладки' };
-      return playInput(tabId, msg.ops || []);
-    }
 
     case MSG.HEARTBEAT:
       heartbeat(sender?.tab?.id, { url: msg.url, phase: msg.phase });
@@ -455,6 +418,18 @@ async function handle(msg, sender) {
       return buildStatus();
 
     case MSG.UI_TOGGLE: {
+      if (msg.enabled) {
+        const current = await getSettings(true);
+        const hasTopic = !!String(current.niche?.description || '').trim()
+          || !!current.niche?.includeKeywords?.length
+          || !!current.niche?.searchQueries?.length;
+        const missing = [];
+        if (!current.ai?.apiKey) missing.push('ключ API');
+        if (!current.ai?.connectionVerified) missing.push('проверка AI');
+        if (!String(current.handle || '').trim()) missing.push('хэндл Threads');
+        if (!hasTopic) missing.push('описание темы');
+        if (missing.length) return { ...(await buildStatus()), ok: false, error: `Завершите настройку: ${missing.join(', ')}` };
+      }
       const s = await setSettings({ enabled: !!msg.enabled });
       let warmedAgain = false;
 
@@ -707,6 +682,13 @@ async function handle(msg, sender) {
       return { ok: true, settings: s };
     }
 
+    case 'ui_import_settings': {
+      const s = await importSettings(msg.settings || {});
+      await updateState((st) => resyncDayLimit(s, st));
+      await refreshBadge();
+      return { ok: true, settings: s };
+    }
+
     case 'ui_get_queue':
       return { ok: true, items: await listQueue({ includeDone: !!msg.includeDone }) };
 
@@ -772,18 +754,23 @@ async function buildStatus() {
 
   const queued = await pendingCount();
   const gate = canComment(settings, state);
+  const topicReady = !!String(settings.niche?.description || '').trim()
+    || !!settings.niche?.includeKeywords?.length
+    || !!settings.niche?.searchQueries?.length;
+  const aiVerified = !!settings.ai.apiKey && settings.ai.connectionVerified === true;
+  const setupReady = aiVerified && !!String(settings.handle || '').trim() && topicReady;
 
   return {
     ok: true,
     enabled: settings.enabled,
     autopilot: settings.autopilot,
     hasKey: !!settings.ai.apiKey,
+    aiVerified,
+    setupReady,
     onboarded: settings.onboarded,
     preset: settings.preset,
     handle: settings.handle,
-    topicReady: !!String(settings.niche?.description || '').trim()
-      || !!settings.niche?.includeKeywords?.length
-      || !!settings.niche?.searchQueries?.length,
+    topicReady,
 
     day: state.day,
     dayCount: state.dayCount || 0,
@@ -814,6 +801,7 @@ async function buildStatus() {
 
     /* Собственные посты: на главном экране это половина работы агента. */
     dayPosts: state.dayPosts || 0,
+    postingEnabled: settings.posting?.enabled === true,
     postLimit: settings.posting?.enabled ? (settings.posting.perDay || 0) : 0,
 
     /*
@@ -831,8 +819,6 @@ async function buildStatus() {
      * первый же тик после пробуждения заполнит заново.
      */
     lastCommand,
-    trustedInput: debuggerState(),
-
     /* Новые подсистемы: видны в статусе, чтобы не гадать по журналу. */
     lease: leaseInfo(),
     pulse: pulseInfo(),

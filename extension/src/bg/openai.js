@@ -1,6 +1,6 @@
 /** Unified text-generation client for ThreadSense AI. */
 import { PRICING, traitsOf } from '../common/defaults.js';
-import { normalizeBaseUrl, providerOf } from '../common/providers.js';
+import { normalizeBaseUrl, providerOf, validateBaseUrl } from '../common/providers.js';
 
 export class AIProviderError extends Error {
   constructor(message, { status = 0, retryable = false, body = null } = {}) {
@@ -45,10 +45,14 @@ function openAIPayload(cfg, opts, model, providerId) {
   if (traits.sampling) {
     body.temperature = opts.temperature ?? cfg.temperature;
     body.top_p = opts.topP ?? cfg.topP;
-    body.presence_penalty = opts.presencePenalty ?? cfg.presencePenalty;
-    body.frequency_penalty = opts.frequencyPenalty ?? cfg.frequencyPenalty;
+    // Penalties are OpenAI-specific enough that many otherwise compatible
+    // gateways reject them. Keep the shared wire format deliberately small.
+    if (providerId === 'openai') {
+      body.presence_penalty = opts.presencePenalty ?? cfg.presencePenalty;
+      body.frequency_penalty = opts.frequencyPenalty ?? cfg.frequencyPenalty;
+    }
   }
-  if (traits.reasoning && cfg.reasoningEffort && cfg.reasoningEffort !== 'none') {
+  if (providerId === 'openai' && traits.reasoning && cfg.reasoningEffort && cfg.reasoningEffort !== 'none') {
     body.reasoning_effort = cfg.reasoningEffort;
   }
   if (opts.json) body.response_format = { type: 'json_object' };
@@ -65,11 +69,11 @@ function anthropicPayload(cfg, opts, model) {
     max_tokens: opts.maxTokens ?? cfg.maxOutputTokens,
     ...(opts.system ? { system: opts.system } : {}),
     messages,
-    temperature: opts.temperature ?? cfg.temperature,
+    temperature: Math.min(1, Math.max(0, opts.temperature ?? cfg.temperature ?? 1)),
   };
 }
 
-function geminiPayload(cfg, opts) {
+function geminiPayload(cfg, opts, model) {
   const contents = (opts.messages || []).map((message) => ({
     role: message.role === 'assistant' ? 'model' : 'user',
     parts: [{ text: typeof message.content === 'string' ? message.content : JSON.stringify(message.content) }],
@@ -79,8 +83,10 @@ function geminiPayload(cfg, opts) {
     contents,
     generationConfig: {
       maxOutputTokens: opts.maxTokens ?? cfg.maxOutputTokens,
-      temperature: opts.temperature ?? cfg.temperature,
-      topP: opts.topP ?? cfg.topP,
+      ...(!/^gemini-3\.(?:5|6)(?:-|$)/.test(model) ? {
+        temperature: opts.temperature ?? cfg.temperature,
+        topP: opts.topP ?? cfg.topP,
+      } : {}),
       ...(opts.json ? { responseMimeType: 'application/json' } : {}),
     },
   };
@@ -90,6 +96,8 @@ function requestFor(cfg, opts, model) {
   const provider = providerOf(cfg);
   const base = normalizeBaseUrl(cfg.baseUrl || provider.baseUrl);
   if (!base) throw new AIProviderError('Не задан адрес API', { status: 400 });
+  const safeUrl = validateBaseUrl(base);
+  if (!safeUrl.ok) throw new AIProviderError(safeUrl.error, { status: 400 });
   if (provider.protocol === 'anthropic') {
     return {
       url: `${base}/messages`,
@@ -101,7 +109,7 @@ function requestFor(cfg, opts, model) {
     return {
       url: `${base}/models/${encodeURIComponent(model)}:generateContent`,
       headers: { 'Content-Type': 'application/json', 'x-goog-api-key': cfg.apiKey },
-      body: geminiPayload(cfg, opts),
+      body: geminiPayload(cfg, opts, model),
     };
   }
   return {
@@ -216,6 +224,8 @@ export async function listModels(cfg) {
   const provider = providerOf(cfg);
   const base = normalizeBaseUrl(cfg.baseUrl || provider.baseUrl);
   try {
+    const safeUrl = validateBaseUrl(base);
+    if (!safeUrl.ok) return { ok: false, error: safeUrl.error };
     let url = `${base}/models`;
     let headers;
     if (provider.protocol === 'anthropic') headers = { 'x-api-key': cfg.apiKey, 'anthropic-version': '2023-06-01' };

@@ -8,7 +8,7 @@
 
 import { MSG, HALT_LABEL } from '../common/messages.js';
 import { PRESETS, ANGLES, applyPreset } from '../common/defaults.js';
-import { AI_PROVIDERS, providerDefaults } from '../common/providers.js';
+import { AI_PROVIDERS, providerDefaults, validateBaseUrl } from '../common/providers.js';
 import { SCHEMA } from './fields.js';
 
 const $ = (s, root = document) => root.querySelector(s);
@@ -29,8 +29,9 @@ const PRESET_META = {
 async function ensureApiPermission(value) {
   let origin;
   try {
-    const url = new URL(String(value || '').trim());
-    if (!['http:', 'https:'].includes(url.protocol)) return false;
+    const checked = validateBaseUrl(value);
+    if (!checked.ok) return false;
+    const url = checked.url;
     origin = `${url.origin}/*`;
   } catch {
     return false;
@@ -38,6 +39,12 @@ async function ensureApiPermission(value) {
   if (!chrome.permissions?.contains) return true;
   if (await chrome.permissions.contains({ origins: [origin] })) return true;
   return chrome.permissions.request({ origins: [origin] });
+}
+
+function invalidateAiVerification(path) {
+  if (/^ai\.(apiKey|provider|baseUrl|modelScore|modelWrite|modelStyle)$/.test(path)) {
+    settings.ai.connectionVerified = false;
+  }
 }
 
 /* ------------------------------------------------------------------ *
@@ -174,10 +181,11 @@ function buildField(f) {
       control.onchange = () => {
         if (f.path === 'ai.provider') {
           const apiKey = settings.ai.apiKey;
-          settings.ai = { ...settings.ai, ...providerDefaults(control.value), apiKey };
+          settings.ai = { ...settings.ai, ...providerDefaults(control.value), apiKey, connectionVerified: false };
           scheduleSave(true).then(() => renderTab('ai'));
           return;
         }
+        invalidateAiVerification(f.path);
         setPath(settings, f.path, control.value);
         scheduleSave();
       };
@@ -189,7 +197,7 @@ function buildField(f) {
       control = document.createElement('textarea');
       control.rows = f.rows || 4;
       control.value = value || '';
-      control.oninput = () => { setPath(settings, f.path, control.value); scheduleSave(); };
+      control.oninput = () => { invalidateAiVerification(f.path); setPath(settings, f.path, control.value); scheduleSave(); };
       if (f.path === 'ai.baseUrl') {
         control.onchange = async () => {
           setPath(settings, f.path, control.value.trim());
@@ -219,7 +227,32 @@ function buildField(f) {
       control.type = f.type === 'password' ? 'password' : 'text';
       control.value = value || '';
       control.autocomplete = 'off';
-      control.oninput = () => { setPath(settings, f.path, control.value); scheduleSave(); };
+      const urlField = f.path === 'ai.baseUrl' || f.path === 'posting.sourceUrl';
+      control.oninput = () => {
+        invalidateAiVerification(f.path);
+        if (!urlField) { setPath(settings, f.path, control.value); scheduleSave(); }
+      };
+      if (urlField) {
+        control.onchange = async () => {
+          const value = control.value.trim();
+          if (!value && f.path === 'posting.sourceUrl') {
+            control.setCustomValidity('');
+            setPath(settings, f.path, '');
+            await scheduleSave(true);
+            return;
+          }
+          const checked = validateBaseUrl(value);
+          control.setCustomValidity(checked.ok ? '' : checked.error);
+          if (!checked.ok) { control.reportValidity(); return; }
+          if (!await ensureApiPermission(value)) {
+            control.setCustomValidity('Разрешите расширению доступ к этому адресу');
+            control.reportValidity();
+            return;
+          }
+          setPath(settings, f.path, value);
+          await scheduleSave(true);
+        };
+      }
       row.appendChild(control);
 
       if (f.action) {
@@ -337,7 +370,9 @@ function bindActions(root) {
       }
       const r = await send({ type: MSG.UI_TEST_KEY, ai: { ...settings.ai } });
       testBtn.disabled = false;
+      settings.ai.connectionVerified = !!r?.ok;
       if (r?.models?.length) applyAvailableModels(r.models, r.model);
+      await scheduleSave(true);
       out.textContent = r?.ok
         ? `работает · ${r.model}`
         : `ошибка: ${r?.error || 'нет ответа'}`;
@@ -437,7 +472,7 @@ function renderPresets(host, current, onPick) {
       <i class="presetCheck"></i>
       <span class="presetTag">${escape(meta.tag || '')}</span>
       <strong>${escape(p.label)}</strong>
-      <span class="presetNumbers">до ${p.limits.perDay} ${ruCount(p.limits.perDay, ['комментария', 'комментариев', 'комментариев'])} · ${p.posting.perDay} ${ruCount(p.posting.perDay, ['поста', 'поста', 'постов'])}</span>
+      <span class="presetNumbers">до ${p.limits.perDay} ${ruCount(p.limits.perDay, ['комментария', 'комментариев', 'комментариев'])} · ${settings.posting?.enabled ? `посты до ${p.posting.perDay}` : 'свои посты выключены'}</span>
       <span class="presetDesc">${escape(meta.desc || p.hint)}</span>`;
     b.onclick = () => onPick(key);
     host.appendChild(b);
@@ -448,7 +483,7 @@ function readinessState() {
   if (!settings) return { ai: false, profile: false, topic: false, mode: false };
   const niche = settings.niche || {};
   return {
-    ai: !!String(settings.ai?.apiKey || '').trim(),
+    ai: !!String(settings.ai?.apiKey || '').trim() && settings.ai?.connectionVerified === true,
     profile: !!String(settings.handle || '').trim(),
     topic: !!String(niche.description || '').trim()
       || !!niche.includeKeywords?.length
@@ -471,7 +506,7 @@ function renderReadiness() {
   $$('[data-ready]').forEach((el) => el.classList.toggle('done', !!state[el.dataset.ready]));
   const mode = PRESETS[settings.preset];
   $('#setupModeText').textContent = mode
-    ? `${mode.label}: до ${mode.limits.perDay} комментариев и ${mode.posting.perDay} ${ruCount(mode.posting.perDay, ['поста', 'поста', 'постов'])}`
+    ? `${mode.label}: до ${mode.limits.perDay} комментариев; ${settings.posting?.enabled ? `посты до ${mode.posting.perDay}` : 'свои посты выключены'}`
     : 'Безопасный режим работы';
 }
 
@@ -480,6 +515,7 @@ async function refreshStatus() {
   if (!s?.ok) return;
 
   $('#stPower').checked = s.enabled;
+  $('#stPower').disabled = !s.enabled && !s.setupReady;
   $('#stAutopilot').checked = !s.autopilot;
   $('#stAutopilotHint').textContent = s.autopilot
     ? 'Агент публикует автоматически. Включите проверку, чтобы вернуть ручное подтверждение.'
@@ -490,7 +526,8 @@ async function refreshStatus() {
   let cls = 'dot';
   let status;
   if (s.halt) { cls += ' err'; status = HALT_LABEL[s.halt.reason] || s.halt.reason; }
-  else if (!s.hasKey) { cls += ' warn'; status = 'нужен ключ API'; }
+  else if (!s.aiVerified) { cls += ' warn'; status = s.hasKey ? 'проверьте подключение AI' : 'нужен ключ API'; }
+  else if (!s.setupReady) { cls += ' warn'; status = 'завершите настройку'; }
   else if (!s.enabled) { status = 'выключен'; }
   else if (s.breaker === 'open') { cls += ' warn'; status = 'предохранитель разомкнут'; }
   else if (s.session?.active) {
@@ -789,6 +826,8 @@ $('#runDry').onclick = async () => {
 $('#exportSettings').onclick = () => {
   const clean = JSON.parse(JSON.stringify(settings));
   clean.ai.apiKey = ''; // ключ в выгрузку не кладём
+  clean.ai.connectionVerified = false;
+  clean.posting.sourceToken = ''; // пользовательские токены тоже не экспортируем
   const blob = new Blob([JSON.stringify(clean, null, 2)], { type: 'application/json' });
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
@@ -802,8 +841,7 @@ $('#importFile').onchange = async (e) => {
   if (!file) return;
   try {
     const obj = JSON.parse(await file.text());
-    const key = settings.ai.apiKey;            // ключ из файла не берём
-    const r = await send({ type: 'ui_replace_settings', settings: { ...obj, ai: { ...obj.ai, apiKey: key } } });
+    const r = await send({ type: 'ui_import_settings', settings: obj });
     if (r?.ok) { settings = r.settings; renderAllTabs(); refreshStatus(); }
   } catch (err) {
     alert(`Не разобрал файл: ${err.message}`);
@@ -917,6 +955,7 @@ let wizStep = 1;
 function showWizard() {
   $('#wizard').classList.remove('hidden');
   $('#wizHandle').value = settings.handle || '';
+  $('#wizTopic').value = settings.niche?.description || '';
   renderPresets($('#wizPresets'), settings.preset, onPresetPick);
   wizGo(1);
 }
@@ -929,7 +968,7 @@ function wizGo(step) {
     s.className = n === step ? 'on' : n < step ? 'done' : '';
   });
   $('#wizBack').style.visibility = step === 1 ? 'hidden' : 'visible';
-  $('#wizNext').textContent = step === 3 ? 'Готово' : 'Дальше';
+  $('#wizNext').textContent = step === 4 ? 'Готово' : 'Дальше';
 }
 
 $('#wizBack').onclick = () => wizGo(Math.max(1, wizStep - 1));
@@ -937,17 +976,30 @@ $('#wizBack').onclick = () => wizGo(Math.max(1, wizStep - 1));
 $('#wizNext').onclick = async () => {
   if (wizStep === 1) {
     const key = $('#wizKey').value.trim();
-    if (key) { settings.ai.apiKey = key; scheduleSave(true); }
-    if (!settings.ai.apiKey) {
-      $('#wizKeyResult').textContent = 'без ключа агент работать не сможет';
+    if (key && key !== settings.ai.apiKey) {
+      settings.ai.apiKey = key;
+      settings.ai.connectionVerified = false;
+      await scheduleSave(true);
+    }
+    if (!settings.ai.apiKey || !settings.ai.connectionVerified) {
+      $('#wizKeyResult').textContent = 'сначала нажмите «Проверить» и дождитесь успешного ответа';
       $('#wizKeyResult').style.color = 'var(--warn)';
       return;
     }
   }
   if (wizStep === 3) {
-    settings.handle = $('#wizHandle').value.replace(/^@/, '').trim() || settings.handle;
+    settings.handle = $('#wizHandle').value.replace(/^@/, '').trim();
+    if (!settings.handle) {
+      $('#wizTrainResult').textContent = 'укажите хэндл — он нужен, чтобы агент не отвечал самому себе';
+      return;
+    }
+    await scheduleSave(true);
+  }
+  if (wizStep === 4) {
+    settings.niche.description = $('#wizTopic').value.trim();
+    if (!settings.niche.description) return;
     settings.onboarded = true;
-    scheduleSave(true);
+    await scheduleSave(true);
     $('#wizard').classList.add('hidden');
     renderAllTabs();
     refreshStatus();
@@ -970,11 +1022,14 @@ $('#wizTestKey').onclick = async () => {
   const r = await send({ type: MSG.UI_TEST_KEY, ai: { ...settings.ai, apiKey: key } });
   if (r?.ok) {
     settings.ai.apiKey = key;
-    scheduleSave(true);
+    settings.ai.connectionVerified = true;
+    await scheduleSave(true);
     out.textContent = `работает · ${r.model}`;
     out.style.color = 'var(--ok)';
     if (r.models?.length) applyAvailableModels(r.models, r.model);
   } else {
+    settings.ai.connectionVerified = false;
+    await scheduleSave(true);
     out.textContent = r?.error || 'не отвечает';
     out.style.color = 'var(--err)';
   }
@@ -982,7 +1037,7 @@ $('#wizTestKey').onclick = async () => {
 
 $('#wizProvider').onchange = () => {
   const apiKey = $('#wizKey').value.trim() || settings.ai.apiKey;
-  settings.ai = { ...settings.ai, ...providerDefaults($('#wizProvider').value), apiKey };
+  settings.ai = { ...settings.ai, ...providerDefaults($('#wizProvider').value), apiKey, connectionVerified: false };
   scheduleSave(true);
 };
 
@@ -993,9 +1048,13 @@ $('#wizTrain').onclick = async (e) => {
 };
 
 $('#wizSkipTrain').onclick = () => {
-  settings.onboarded = true;
+  settings.handle = $('#wizHandle').value.replace(/^@/, '').trim();
+  if (!settings.handle) {
+    $('#wizTrainResult').textContent = 'сначала укажите хэндл';
+    return;
+  }
   scheduleSave(true);
-  $('#wizard').classList.add('hidden');
+  wizGo(4);
 };
 
 /* ------------------------------------------------------------------ *
@@ -1040,8 +1099,13 @@ function openTab(tab) {
 }
 
 $('#stPower').onchange = async (e) => {
-  await send({ type: MSG.UI_TOGGLE, enabled: e.target.checked });
-  refreshStatus();
+  const wanted = e.target.checked;
+  const result = await send({ type: MSG.UI_TOGGLE, enabled: wanted });
+  if (!result?.ok && wanted) {
+    e.target.checked = false;
+    $('#stWhy').textContent = result?.error || 'Завершите первоначальную настройку';
+  }
+  await refreshStatus();
 };
 
 $('#stAutopilot').onchange = (e) => {
