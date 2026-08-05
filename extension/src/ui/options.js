@@ -7,13 +7,55 @@
  */
 
 import { MSG, HALT_LABEL } from '../common/messages.js';
-import { PRESETS, ANGLES, applyPreset } from '../common/defaults.js';
+import { GITHUB_REPOSITORY_URL } from '../common/update.js';
+import { DEFAULTS, PRESETS, ANGLES, applyPreset } from '../common/defaults.js';
 import { AI_PROVIDERS, providerDefaults, validateBaseUrl } from '../common/providers.js';
 import { SCHEMA } from './fields.js';
 
 const $ = (s, root = document) => root.querySelector(s);
 const $$ = (s, root = document) => [...root.querySelectorAll(s)];
-const send = (msg) => chrome.runtime.sendMessage(msg);
+const DEMO = new URLSearchParams(location.search).get('demo') === '1';
+const DEMO_UPDATE = new URLSearchParams(location.search).get('update') === '1';
+const demoSettings = DEMO ? structuredClone(DEFAULTS) : null;
+if (demoSettings) {
+  demoSettings.onboarded = true;
+  demoSettings.handle = 'your_profile';
+  demoSettings.ai.apiKey = 'demo-key';
+  demoSettings.ai.connectionVerified = true;
+  demoSettings.niche.description = 'Практические обсуждения выбранной вами темы';
+}
+
+const demoUpdate = () => ({
+  currentVersion: DEMO_UPDATE ? '2.2.0' : '2.3.0',
+  available: DEMO_UPDATE ? {
+    tag: 'v2.3.0', version: '2.3.0',
+    releaseUrl: 'https://github.com/sany86russ/ThreadSense-AI/releases/tag/v2.3.0',
+    downloadUrl: 'https://github.com/sany86russ/ThreadSense-AI/releases/download/v2.3.0/ThreadSense-AI-v2.3.0-unpacked.zip',
+  } : null,
+  visible: DEMO_UPDATE,
+  checkedAt: Date.now(),
+  error: '',
+});
+
+async function demoSend(msg) {
+  if (msg.type === 'ui_get_settings') return { ok: true, settings: demoSettings };
+  if (msg.type === MSG.UI_GET_STATUS) return {
+    ok: true, enabled: false, autopilot: false, hasKey: true, aiVerified: true, setupReady: true,
+    onboarded: true, preset: demoSettings.preset, handle: demoSettings.handle, topicReady: true,
+    dayCount: 3, dayLimit: 8, dayLikes: 7, dayViews: 31, daySpend: 0.018, budget: 1,
+    warmupDay: 1, warmupDays: 7, session: { active: false }, nextSessionAt: 0,
+    breaker: 'closed', halt: null, blocked: null, queued: 2, totals: { comments: 42 }, history: {},
+    estimate: { sessionsPerDay: 3, awakeHours: 12, estimatedComments: 8, cycleMinutes: 54 },
+    dayPosts: 1, postingEnabled: true, postLimit: 4, update: demoUpdate(),
+  };
+  if (msg.type === MSG.UI_CHECK_UPDATE) return { ok: true, update: demoUpdate() };
+  if (msg.type === MSG.UI_DISMISS_UPDATE) return { ok: true, update: { ...demoUpdate(), visible: false } };
+  if (msg.type === 'ui_estimate') return { ok: true, estimate: { sessionsPerDay: 3, awakeHours: 12, estimatedComments: 8, cycleMinutes: 54 } };
+  if (msg.type === 'ui_get_log') return { ok: true, log: [] };
+  return { ok: true };
+}
+
+const send = (msg) => DEMO ? demoSend(msg) : chrome.runtime.sendMessage(msg);
 
 let settings = null;
 let saveTimer = null;
@@ -510,6 +552,36 @@ function renderReadiness() {
     : 'Безопасный режим работы';
 }
 
+let lastUpdate = null;
+
+function openExternal(url) {
+  if (!/^https:\/\/github\.com\/sany86russ\/ThreadSense-AI(?:\/|$)/i.test(String(url || ''))) return;
+  chrome.tabs.create({ url });
+}
+
+function renderUpdate(update) {
+  lastUpdate = update || lastUpdate;
+  const banner = $('#optionsUpdate');
+  const release = update?.available;
+  banner.classList.toggle('hidden', !release || !update.visible);
+  if (!release) return;
+  $('#optionsUpdateTitle').textContent = `Доступна ThreadSense AI ${release.tag}`;
+  $('#optionsUpdateText').textContent = `Установлена ${update.currentVersion}. Скачайте ZIP, распакуйте его и нажмите «Обновить» на chrome://extensions.`;
+}
+
+async function checkUpdates(force = false) {
+  const button = $('#checkUpdatesOptions');
+  button.disabled = true;
+  button.classList.add('checking');
+  const result = await send({ type: MSG.UI_CHECK_UPDATE, force });
+  button.disabled = false;
+  button.classList.remove('checking');
+  if (result?.update) renderUpdate(result.update);
+  button.title = result?.update?.available
+    ? `Доступна ${result.update.available.tag}`
+    : (result?.update?.error ? 'Не удалось связаться с GitHub' : 'Установлена последняя версия');
+}
+
 async function refreshStatus() {
   const s = await send({ type: MSG.UI_GET_STATUS });
   if (!s?.ok) return;
@@ -564,6 +636,7 @@ async function refreshStatus() {
   renderHistory(s.history, s.day, s.dayCount);
   renderEstimate(s.estimate, s);
   renderReadiness();
+  renderUpdate(s.update);
 }
 
 function renderEstimate(est, s) {
@@ -1135,6 +1208,15 @@ $('#logRefresh').onclick = renderLog;
 $('#logFilter').onchange = renderLog;
 $('#logClear').onclick = async () => { await send({ type: 'ui_clear_log' }); renderLog(); };
 
+$('#openGitHubOptions').onclick = () => openExternal(GITHUB_REPOSITORY_URL);
+$('#checkUpdatesOptions').onclick = () => checkUpdates(true);
+$('#downloadUpdateOptions').onclick = () => openExternal(lastUpdate?.available?.downloadUrl);
+$('#releaseNotesOptions').onclick = () => openExternal(lastUpdate?.available?.releaseUrl);
+$('#dismissUpdateOptions').onclick = async () => {
+  const result = await send({ type: MSG.UI_DISMISS_UPDATE, tag: lastUpdate?.available?.tag });
+  if (result?.update) renderUpdate(result.update);
+};
+
 /* -------------------------------- Утилиты -------------------------------- */
 
 function escape(s) {
@@ -1206,7 +1288,8 @@ async function init() {
   if (hash === 'wizard' || !settings.onboarded) showWizard();
   else if (hash) openTab(hash);
 
-  refreshStatus();
+  await refreshStatus();
+  await checkUpdates(false);
   setInterval(refreshStatus, 4000);
 }
 

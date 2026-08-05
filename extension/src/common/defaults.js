@@ -1579,6 +1579,15 @@ DEFAULTS.posting.enabled = false;
 export const DEFAULT_STATE = {
   version: SCHEMA_VERSION,
 
+  /** Best-effort GitHub release discovery. Never contains downloaded code. */
+  update: {
+    checkedAt: 0,
+    latest: null,
+    dismissedTag: '',
+    notifiedTag: '',
+    error: '',
+  },
+
   /** ISO-дата первого запуска. Отсюда считается прогрев. */
   firstRunDate: null,
 

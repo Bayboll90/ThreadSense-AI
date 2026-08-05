@@ -37,6 +37,10 @@ import { recoveryInfo } from './recovery.js';
 import { survivalStats } from './survival.js';
 import { PRESETS, applyPreset } from '../common/defaults.js';
 import { POST_KINDS } from './postplan.js';
+import {
+  UPDATE_ALARM, UPDATE_NOTIFICATION, checkForUpdates, dismissUpdate,
+  getUpdateView, openLatestRelease, scheduleUpdateChecks,
+} from './update.js';
 
 /* --------------------------- Жизненный цикл ------------------------------ */
 
@@ -84,6 +88,7 @@ chrome.runtime.onInstalled.addListener(async (details) => {
   const settings = await getSettings();   // материализуем дефолты
   await updateState((s) => rolloverDay(settings, s, Date.now()));
   await chrome.alarms.create('housekeeping', { periodInMinutes: 5 });
+  await scheduleUpdateChecks();
   await startWatchdog();
   await injectIntoOpenTabs();
 
@@ -93,14 +98,23 @@ chrome.runtime.onInstalled.addListener(async (details) => {
   }
   await ensureStatusWindow(settings);
   await refreshBadge();
+  checkForUpdates().catch(() => {});
 });
 
 chrome.runtime.onStartup.addListener(async () => {
   await chrome.alarms.create('housekeeping', { periodInMinutes: 5 });
+  await scheduleUpdateChecks();
   await startWatchdog();
   await injectIntoOpenTabs();
   await ensureStatusWindow(await getSettings());
   await refreshBadge();
+  checkForUpdates().catch(() => {});
+});
+
+chrome.notifications.onClicked.addListener((notificationId) => {
+  if (notificationId !== UPDATE_NOTIFICATION) return;
+  openLatestRelease().catch(() => {});
+  chrome.notifications.clear(notificationId).catch(() => {});
 });
 
 /**
@@ -229,6 +243,10 @@ async function checkArrival(kind) {
 }
 
 chrome.alarms.onAlarm.addListener(async (alarm) => {
+  if (alarm.name === UPDATE_ALARM) {
+    await checkForUpdates();
+    return;
+  }
   if (alarm.name === WATCHDOG_ALARM) {
     await checkPulse();
     return;
@@ -416,6 +434,12 @@ async function handle(msg, sender) {
 
     case MSG.UI_GET_STATUS:
       return buildStatus();
+
+    case MSG.UI_CHECK_UPDATE:
+      return { ok: true, update: await checkForUpdates({ force: !!msg.force }) };
+
+    case MSG.UI_DISMISS_UPDATE:
+      return { ok: true, update: await dismissUpdate(msg.tag) };
 
     case MSG.UI_TOGGLE: {
       if (msg.enabled) {
@@ -825,6 +849,7 @@ async function buildStatus() {
     registry: registryStats(state),
     recovery: recoveryInfo(state),
     survival: survivalStats(state),
+    update: await getUpdateView(state),
   };
 }
 

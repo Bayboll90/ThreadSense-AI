@@ -16,8 +16,15 @@
   <header class="popupHead">
     <span class="brandMark" aria-hidden="true">T</span>
     <div class="grow"><strong>ThreadSense AI</strong><div class="tiny muted">Умный помощник для Threads</div></div>
+    <button class="githubTop" id="openGitHub" title="Основной репозиторий ThreadSense AI">GITHUB ↗</button>
     <span class="statusPill"><span class="dot" id="dot"></span><span id="statusLine">загрузка…</span></span>
   </header>
+
+  <section class="popupUpdate hidden" id="popupUpdate" aria-live="polite">
+    <div class="updateCopy"><strong id="popupUpdateTitle">Доступна новая версия</strong><span id="popupUpdateText">Готовый ZIP уже на GitHub</span></div>
+    <button class="updateDownload" id="downloadUpdatePopup">Скачать</button>
+    <button class="updateDismiss" id="dismissUpdatePopup" title="Напомнить позже" aria-label="Напомнить позже">×</button>
+  </section>
 
   <div id="alert" class="alert hidden"></div>
   <div id="setup" class="setupCard hidden"></div>

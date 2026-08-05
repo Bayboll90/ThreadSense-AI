@@ -40,6 +40,8 @@ export const MSG = {
   UI_PREVIEW_HUMANIZE: 'ui_preview_humanize',
   UI_DRY_RUN: 'ui_dry_run',             // прогон без публикации
   UI_CLEAR_HALT: 'ui_clear_halt',
+  UI_CHECK_UPDATE: 'ui_check_update',
+  UI_DISMISS_UPDATE: 'ui_dismiss_update',
 
   /* bg -> ui (пуш) */
   PUSH_STATUS: 'push_status',

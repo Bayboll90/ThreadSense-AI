@@ -75,6 +75,10 @@
       <span class="brandMark" aria-hidden="true">T</span>
       <span class="brandCopy"><strong>ThreadSense AI</strong><small>Панель управления</small></span>
       <span class="dot" id="navDot"></span>
+      <div class="repoActions">
+        <button class="repoLink" id="openGitHubOptions" title="Открыть основной репозиторий ThreadSense AI">GITHUB <span>Репозиторий ↗</span></button>
+        <button class="repoCheck" id="checkUpdatesOptions" title="Проверить обновления" aria-label="Проверить обновления">↻</button>
+      </div>
     </div>
 
     <!--
@@ -132,6 +136,20 @@
         </div>
         <button class="ghost helpBtn" data-open-tab="ai">Помочь с настройкой</button>
       </div>
+
+      <section class="updateBanner hidden" id="optionsUpdate" aria-live="polite">
+        <div class="updateIcon" aria-hidden="true">↑</div>
+        <div class="grow">
+          <span class="eyebrow">Обновление с GitHub</span>
+          <strong id="optionsUpdateTitle">Доступна новая версия</strong>
+          <p id="optionsUpdateText">Скачайте готовый ZIP и обновите распакованное расширение.</p>
+        </div>
+        <div class="updateActions">
+          <button class="primary" id="downloadUpdateOptions">Скачать ZIP</button>
+          <button class="ghost" id="releaseNotesOptions">Что нового</button>
+          <button class="iconBtn" id="dismissUpdateOptions" title="Напомнить позже" aria-label="Напомнить позже">×</button>
+        </div>
+      </section>
 
       <div class="readiness card" id="readiness">
         <div class="readinessScore">

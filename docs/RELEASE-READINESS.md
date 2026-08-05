@@ -1,4 +1,4 @@
-# Release readiness — 2.2.0
+# Release readiness — 2.3.0
 
 Checked on 2026-08-05.
 
@@ -21,13 +21,21 @@ The setup page requests the model catalog with the entered key, lets the user ch
 
 Provider tests use mocked network responses and verify URLs, authentication headers, request shapes, normalized text/usage and model discovery. They do not claim that a third-party account, quota or model entitlement is active. That final live check happens with the user's own key during onboarding.
 
+## GitHub release updates
+
+- The repository button is visible at the top of both the popup and Settings and only opens `https://github.com/sany86russ/ThreadSense-AI`.
+- The background checks GitHub's public `releases/latest` endpoint at startup and every 6 hours, ignores drafts, prereleases, malformed tags and versions that are not newer, and prefers the exact ready-to-use ZIP asset name.
+- Failures, offline mode, timeouts and API rate limits are best-effort and never stop the agent. Concurrent checks are serialized and routine requests are throttled.
+- A newer stable release produces one Chrome notification and dismissible banners in both UI surfaces. Remote strings are inserted as text, not HTML, and remote URLs are accepted only under the canonical GitHub repository.
+- Because Chrome cannot let an unpacked extension safely overwrite itself, the UI guides the user through downloading, extracting and reloading the directory from `chrome://extensions`.
+
 ## Verification evidence
 
-- `npm test`: 63 extension files parsed; 269 deterministic/regression checks passed; 6 provider-contract checks passed.
+- `npm test`: 65 extension files parsed; 269 deterministic/regression checks passed; 6 provider-contract checks and the GitHub release contract passed.
 - Public manifest, package version, preset paths and obvious credential patterns are checked by the test suite.
 - The complete first-run browser journey was exercised from an empty profile through API verification, handle, topic, 100% readiness and manual launch.
-- No browser console errors were observed in the settings or popup preview.
-- Horizontal overflow was checked at popup widths 320, 360 and 390 px and settings widths 360 and 768 px. In every case `scrollWidth === clientWidth`.
+- Clean reloads of the settings and popup previews produced no new browser console errors.
+- The new controls were checked at 390 px and on a wide settings viewport. The popup reported `scrollWidth === innerWidth`, no button text clipping and no element outside the viewport; Settings had no overflow outside its deliberately scrollable mobile navigation.
 - The repository's three existing Git commits and the current publish set were scanned for common API-key prefixes, private keys and public IPv4 addresses; no matches were found.
 
 ## Live Threads boundary

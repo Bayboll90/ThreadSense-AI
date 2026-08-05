@@ -1,13 +1,14 @@
 {
   "name": "threadsense-ai",
-  "version": "2.2.0",
+  "version": "2.3.0",
   "private": true,
   "type": "module",
   "scripts": {
-    "test": "node test/syntax.mjs && node test/math.mjs && node test/providers.mjs",
+    "test": "node test/syntax.mjs && node test/math.mjs && node test/providers.mjs && node test/update.mjs",
     "test:syntax": "node test/syntax.mjs",
     "test:math": "node test/math.mjs",
-    "test:providers": "node test/providers.mjs"
+    "test:providers": "node test/providers.mjs",
+    "test:update": "node test/update.mjs"
   },
   "engines": {
     "node": ">=20"

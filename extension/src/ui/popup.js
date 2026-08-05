@@ -14,8 +14,11 @@
 
 import { MSG, HALT_LABEL } from '../common/messages.js';
 import { PRESETS } from '../common/defaults.js';
+import { GITHUB_REPOSITORY_URL } from '../common/update.js';
 
 const $ = (sel) => document.querySelector(sel);
+const DEMO = new URLSearchParams(location.search).get('demo') === '1';
+const DEMO_UPDATE = new URLSearchParams(location.search).get('update') === '1';
 
 const els = {
   dot: $('#dot'),
@@ -38,11 +41,39 @@ const els = {
   queueCount: $('#queueCount'),
   logList: $('#logList'),
   eventCard: $('.eventCard'),
+  update: $('#popupUpdate'),
 };
 
-const send = (msg) => chrome.runtime.sendMessage(msg);
+const demoUpdate = () => ({
+  currentVersion: DEMO_UPDATE ? '2.2.0' : '2.3.0',
+  available: DEMO_UPDATE ? {
+    tag: 'v2.3.0',
+    releaseUrl: 'https://github.com/sany86russ/ThreadSense-AI/releases/tag/v2.3.0',
+    downloadUrl: 'https://github.com/sany86russ/ThreadSense-AI/releases/download/v2.3.0/ThreadSense-AI-v2.3.0-unpacked.zip',
+  } : null,
+  visible: DEMO_UPDATE,
+});
+
+async function demoSend(msg) {
+  if (msg.type === MSG.UI_GET_STATUS) return {
+    ok: true, enabled: false, autopilot: false, hasKey: true, aiVerified: true, setupReady: true,
+    preset: 'careful', handle: 'your_profile', topicReady: true, halt: null, breaker: 'closed',
+    dayCount: 3, dayLimit: 8, dayPosts: 1, postingEnabled: true, postLimit: 4,
+    dayLikes: 7, dayViews: 31, daySpend: 0.018, budget: 1, warmupDay: 1, warmupDays: 7,
+    session: { active: false }, nextSessionAt: 0, queued: 2, recovery: null, pipeline: null,
+    survival: { checked: 3, alive: 3 }, lease: null, update: demoUpdate(),
+  };
+  if (msg.type === MSG.UI_CHECK_UPDATE) return { ok: true, update: demoUpdate() };
+  if (msg.type === MSG.UI_DISMISS_UPDATE) return { ok: true, update: { ...demoUpdate(), visible: false } };
+  if (msg.type === 'ui_get_log') return { ok: true, log: [] };
+  return { ok: true };
+}
+
+const send = (msg) => DEMO ? demoSend(msg) : chrome.runtime.sendMessage(msg);
 
 let busy = false;
+let currentStatus = {};
+let lastUpdate = null;
 
 const PRESET_ORDER = ['careful', 'normal', 'boost', 'active'];
 
@@ -58,7 +89,7 @@ function renderPresets(current) {
     b.className = `presetBtn${key === current ? ' on' : ''}`;
     b.innerHTML = `
       <strong>${p.label}</strong>
-      <span class="tiny">${p.limits.perDay} комм. · ${status.postingEnabled ? `посты до ${p.posting.perDay}` : 'посты выкл.'}</span>`;
+      <span class="tiny">до ${p.limits.perDay} · ${currentStatus.postingEnabled ? `посты до ${p.posting.perDay}` : 'посты выкл.'}</span>`;
     b.title = p.hint;
     b.onclick = async () => {
       if (busy) return;
@@ -74,7 +105,9 @@ function renderPresets(current) {
 /* -------------------------------- Отрисовка ------------------------------ */
 
 function render(s) {
+  currentStatus = s;
   renderPresets(s.preset);
+  renderUpdate(s.update);
 
   els.autopilot.checked = !s.autopilot;
   els.autopilotHint.textContent = s.autopilot
@@ -205,6 +238,21 @@ function render(s) {
   els.openQueue.classList.toggle('hidden', !s.queued);
 }
 
+function openExternal(url) {
+  if (!/^https:\/\/github\.com\/sany86russ\/ThreadSense-AI(?:\/|$)/i.test(String(url || ''))) return;
+  chrome.tabs.create({ url });
+  window.close();
+}
+
+function renderUpdate(update) {
+  lastUpdate = update || lastUpdate;
+  const release = update?.available;
+  els.update.classList.toggle('hidden', !release || !update.visible);
+  if (!release) return;
+  $('#popupUpdateTitle').textContent = `Доступна ${release.tag}`;
+  $('#popupUpdateText').textContent = `Сейчас ${update.currentVersion} · готовый ZIP на GitHub`;
+}
+
 function phaseLabel(phase) {
   return {
     need_scan: 'ищет посты',
@@ -301,6 +349,12 @@ $('#openThreads').onclick = () => {
   chrome.tabs.create({ url: 'https://www.threads.com/' });
   window.close();
 };
+$('#openGitHub').onclick = () => openExternal(GITHUB_REPOSITORY_URL);
+$('#downloadUpdatePopup').onclick = () => openExternal(lastUpdate?.available?.downloadUrl);
+$('#dismissUpdatePopup').onclick = async () => {
+  const result = await send({ type: MSG.UI_DISMISS_UPDATE, tag: lastUpdate?.available?.tag });
+  if (result?.update) renderUpdate(result.update);
+};
 
 function openOptions(hash) {
   chrome.tabs.create({ url: chrome.runtime.getURL(`src/ui/options.html${hash}`) });
@@ -309,12 +363,13 @@ function openOptions(hash) {
 
 /* --------------------------------- Запуск -------------------------------- */
 
-async function refresh() {
+async function refresh(checkUpdate = false) {
   if (busy) return;
+  if (checkUpdate) await send({ type: MSG.UI_CHECK_UPDATE });
   const s = await send({ type: MSG.UI_GET_STATUS });
   if (s?.ok) render(s);
   await renderLog();
 }
 
-refresh();
+refresh(true);
 setInterval(refresh, 3000);

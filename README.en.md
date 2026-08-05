@@ -15,7 +15,7 @@
 
 ### AI assistant for discovering conversations, drafting replies, and managing a review queue on Threads
 
-![Version](https://img.shields.io/badge/version-2.2.0-7B6CFF?style=for-the-badge)
+![Version](https://img.shields.io/badge/version-2.3.0-7B6CFF?style=for-the-badge)
 ![Chrome](https://img.shields.io/badge/Chrome-116%2B-171B2A?style=for-the-badge&logo=googlechrome)
 ![Manifest V3](https://img.shields.io/badge/Manifest-V3-171B2A?style=for-the-badge)
 ![License](https://img.shields.io/badge/license-MIT-22C9A3?style=for-the-badge)
@@ -109,12 +109,12 @@ The popup is for everyday use: start or stop, change pace, see daily limits and 
 
 ### Ready-to-use build — recommended
 
-1. Download [`ThreadSense-AI-v2.2.0-unpacked.zip`](https://github.com/sany86russ/ThreadSense-AI/releases/download/v2.2.0/ThreadSense-AI-v2.2.0-unpacked.zip) from **Assets** on the [latest release](https://github.com/sany86russ/ThreadSense-AI/releases/latest).
-2. Extract the ZIP to a permanent location. It contains a ready-to-use `ThreadSense-AI-v2.2.0` directory with `manifest.json` at its root.
+1. Download [`ThreadSense-AI-v2.3.0-unpacked.zip`](https://github.com/sany86russ/ThreadSense-AI/releases/download/v2.3.0/ThreadSense-AI-v2.3.0-unpacked.zip) from **Assets** on the [latest release](https://github.com/sany86russ/ThreadSense-AI/releases/latest).
+2. Extract the ZIP to a permanent location. It contains a ready-to-use `ThreadSense-AI-v2.3.0` directory with `manifest.json` at its root.
 3. Open `chrome://extensions`.
 4. Enable **Developer mode**.
 5. Select **Load unpacked**.
-6. Choose the extracted `ThreadSense-AI-v2.2.0` directory — the one that directly contains `manifest.json`.
+6. Choose the extracted `ThreadSense-AI-v2.3.0` directory — the one that directly contains `manifest.json`.
 7. Pin ThreadSense AI to the browser toolbar.
 
 > [!IMPORTANT]
@@ -130,18 +130,24 @@ cd ThreadSense-AI
 ```
 
 > [!NOTE]
-> The ready ZIP contains only extension files from tag `v2.2.0`: no tests, Git history, local settings, or keys. It is an unpacked Manifest V3 extension rather than a `.crx`; Chrome may display its standard Developer mode warning.
+> The ready ZIP contains only extension files from tag `v2.3.0`: no tests, Git history, local settings, or keys. It is an unpacked Manifest V3 extension rather than a `.crx`; Chrome may display its standard Developer mode warning.
+
+### Updates from GitHub
+
+ThreadSense AI checks the latest stable GitHub Release at startup and then every 6 hours. When a newer version exists, the extension shows a banner in the agent popup and Settings, plus a single Chrome notification. Run a manual check with the **↻** button next to **GITHUB** at the top of Settings.
+
+An unpacked extension cannot safely replace its own files. Select **Download ZIP**, extract the new version to a permanent directory, open `chrome://extensions`, and press **Reload**. If the directory changed, remove the old extension card and use **Load unpacked** again. Chrome settings are retained only when the same installation is reloaded; export them first from **Diagnostics → Settings file** when reinstalling.
 
 ## 🚀 Quick start
 
 ### 1. Download and install the ready build
 
 1. Open the [latest ThreadSense AI release](https://github.com/sany86russ/ThreadSense-AI/releases/latest).
-2. Under **Assets**, download **`ThreadSense-AI-v2.2.0-unpacked.zip`**.
-3. Extract it and remember the location of the `ThreadSense-AI-v2.2.0` directory.
+2. Under **Assets**, download **`ThreadSense-AI-v2.3.0-unpacked.zip`**.
+3. Extract it and remember the location of the `ThreadSense-AI-v2.3.0` directory.
 4. Enter `chrome://extensions` in the Google Chrome address bar.
 5. Enable **Developer mode** in the top-right corner.
-6. Select **Load unpacked** and choose the `ThreadSense-AI-v2.2.0` directory containing `manifest.json`.
+6. Select **Load unpacked** and choose the `ThreadSense-AI-v2.3.0` directory containing `manifest.json`.
 7. Select the puzzle icon in the Chrome toolbar and pin **ThreadSense AI**.
 
 ### 2. Connect AI

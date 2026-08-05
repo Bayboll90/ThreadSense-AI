@@ -15,7 +15,7 @@
 
 ### AI-помощник для поиска обсуждений, подготовки ответов и управления черновиками в Threads
 
-![Версия](https://img.shields.io/badge/версия-2.2.0-7B6CFF?style=for-the-badge)
+![Версия](https://img.shields.io/badge/версия-2.3.0-7B6CFF?style=for-the-badge)
 ![Chrome](https://img.shields.io/badge/Chrome-116%2B-171B2A?style=for-the-badge&logo=googlechrome)
 ![Manifest V3](https://img.shields.io/badge/Manifest-V3-171B2A?style=for-the-badge)
 ![Лицензия](https://img.shields.io/badge/лицензия-MIT-22C9A3?style=for-the-badge)
@@ -109,12 +109,12 @@ Popup предназначен для ежедневной работы: зап�
 
 ### Готовая сборка — рекомендуется
 
-1. Скачайте [`ThreadSense-AI-v2.2.0-unpacked.zip`](https://github.com/sany86russ/ThreadSense-AI/releases/download/v2.2.0/ThreadSense-AI-v2.2.0-unpacked.zip) из раздела **Assets** [последнего релиза](https://github.com/sany86russ/ThreadSense-AI/releases/latest).
-2. Распакуйте ZIP в постоянную папку. Внутри будет готовый каталог `ThreadSense-AI-v2.2.0` с файлом `manifest.json`.
+1. Скачайте [`ThreadSense-AI-v2.3.0-unpacked.zip`](https://github.com/sany86russ/ThreadSense-AI/releases/download/v2.3.0/ThreadSense-AI-v2.3.0-unpacked.zip) из раздела **Assets** [последнего релиза](https://github.com/sany86russ/ThreadSense-AI/releases/latest).
+2. Распакуйте ZIP в постоянную папку. Внутри будет готовый каталог `ThreadSense-AI-v2.3.0` с файлом `manifest.json`.
 3. Откройте `chrome://extensions`.
 4. Включите **Режим разработчика**.
 5. Нажмите **Загрузить распакованное расширение**.
-6. Выберите распакованную папку `ThreadSense-AI-v2.2.0` — именно ту, внутри которой лежит `manifest.json`.
+6. Выберите распакованную папку `ThreadSense-AI-v2.3.0` — именно ту, внутри которой лежит `manifest.json`.
 7. Закрепите ThreadSense AI на панели браузера.
 
 > [!IMPORTANT]
@@ -130,18 +130,24 @@ cd ThreadSense-AI
 ```
 
 > [!NOTE]
-> Готовый ZIP содержит только файлы расширения из тега `v2.2.0`: без тестов, Git-истории, локальных настроек и ключей. Это распакованное Manifest V3-расширение, а не `.crx`; Chrome может показывать стандартное предупреждение о режиме разработчика.
+> Готовый ZIP содержит только файлы расширения из тега `v2.3.0`: без тестов, Git-истории, локальных настроек и ключей. Это распакованное Manifest V3-расширение, а не `.crx`; Chrome может показывать стандартное предупреждение о режиме разработчика.
+
+### Обновления через GitHub
+
+ThreadSense AI проверяет последний стабильный GitHub Release при запуске и затем раз в 6 часов. Когда версия новее установленной, расширение показывает баннер в окне агента и настройках, а также одно уведомление Chrome. Проверку можно запустить вручную кнопкой **↻** рядом с **GITHUB** вверху настроек.
+
+Распакованное расширение не может безопасно заменить собственные файлы. Нажмите **Скачать ZIP**, распакуйте новую версию в постоянную папку, откройте `chrome://extensions` и нажмите **Обновить**. Если путь к папке изменился, удалите старую карточку расширения и снова выберите **Загрузить распакованное расширение**. Настройки Chrome сохраняются только при обновлении той же установки; перед переустановкой при необходимости экспортируйте их в **Диагностика → Настройки файлом**.
 
 ## 🚀 Быстрый старт
 
 ### 1. Скачайте и подключите готовое расширение
 
 1. Откройте [последний релиз ThreadSense AI](https://github.com/sany86russ/ThreadSense-AI/releases/latest).
-2. В блоке **Assets** скачайте **`ThreadSense-AI-v2.2.0-unpacked.zip`**.
-3. Распакуйте архив и запомните расположение папки `ThreadSense-AI-v2.2.0`.
+2. В блоке **Assets** скачайте **`ThreadSense-AI-v2.3.0-unpacked.zip`**.
+3. Распакуйте архив и запомните расположение папки `ThreadSense-AI-v2.3.0`.
 4. Вставьте `chrome://extensions` в адресную строку Google Chrome.
 5. Включите **Режим разработчика** в правом верхнем углу.
-6. Нажмите **Загрузить распакованное расширение** и выберите папку `ThreadSense-AI-v2.2.0` с `manifest.json` внутри.
+6. Нажмите **Загрузить распакованное расширение** и выберите папку `ThreadSense-AI-v2.3.0` с `manifest.json` внутри.
 7. Нажмите значок пазла в панели Chrome и закрепите **ThreadSense AI**.
 
 ### 2. Подключите AI

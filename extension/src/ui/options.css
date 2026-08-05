@@ -25,12 +25,30 @@ aside {
 }
 
 .brand {
-  display: flex;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
   align-items: center;
   gap: 8px;
   padding: 0 6px;
   font-size: 14px;
 }
+
+.repoActions { grid-column: 1 / -1; display: grid; grid-template-columns: minmax(0, 1fr) 34px; gap: 6px; margin-top: 4px; }
+.repoLink, .repoCheck { min-width: 0; min-height: 32px; border-color: rgba(123,108,255,.28); background: linear-gradient(135deg, rgba(123,108,255,.14), rgba(69,214,208,.06)); color: var(--text); }
+.repoLink { justify-content: space-between; padding: 7px 9px; font-size: 10px; font-weight: 800; letter-spacing: .08em; }
+.repoLink span { color: var(--text-3); font-size: 9px; font-weight: 600; letter-spacing: 0; }
+.repoLink:hover, .repoCheck:hover { border-color: var(--accent); background: rgba(123,108,255,.2); }
+.repoCheck { width: 34px; padding: 0; font-size: 17px; }
+.repoCheck.checking { animation: spin .8s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.updateBanner { display: flex; align-items: center; gap: 14px; padding: 15px 16px; margin-bottom: 16px; border: 1px solid rgba(69,214,208,.26); border-radius: 16px; background: linear-gradient(135deg, rgba(69,214,208,.1), rgba(123,108,255,.12)); box-shadow: 0 14px 34px rgba(0,0,0,.12); }
+.updateBanner .updateIcon { width: 40px; height: 40px; display: grid; place-items: center; flex: none; border-radius: 13px; background: rgba(69,214,208,.14); color: var(--accent-2); font-size: 22px; font-weight: 800; }
+.updateBanner strong { display: block; margin: 2px 0; font-size: 14px; }
+.updateBanner p { margin: 0; color: var(--text-2); font-size: 11px; line-height: 1.45; }
+.updateActions { display: flex; align-items: center; gap: 6px; flex: none; }
+.updateActions button { white-space: nowrap; }
+.updateActions .iconBtn { width: 34px; padding: 0; }
 
 nav {
   display: grid;
@@ -852,6 +870,13 @@ main { max-width: 1120px; min-width: 0; width: 100%; padding: 42px 48px 90px; }
   #app { display: block; }
   aside { position: sticky; height: auto; padding: 12px; }
   .brand { padding-bottom: 0; }
+  .repoActions { grid-column: auto; display: flex; margin: 0 0 0 auto; }
+  .repoLink { width: auto; }
+  .repoLink span { display: none; }
+  .updateBanner { align-items: flex-start; flex-wrap: wrap; }
+  .updateBanner .grow { min-width: calc(100% - 58px); }
+  .updateActions { width: 100%; flex-wrap: wrap; }
+  .updateActions .primary, .updateActions .ghost { flex: 1 1 120px; }
   #nav { display: flex; overflow-x: auto; padding-bottom: 2px; }
   #nav .navLabel, #nav button .navIcon { display: none; }
   #nav button { width: auto; flex: none; }
