@@ -103,17 +103,22 @@ The popup is for everyday use: start or stop, change pace, see daily limits and 
 
 ## 📥 Installation
 
-### Download and load the extension
+### Ready-to-use build — recommended
 
-1. On the repository page, select **Code → Download ZIP**.
-2. Extract it to a permanent folder. Do not delete that folder after installation.
+1. Download [`ThreadSense-AI-v2.2.0-unpacked.zip`](https://github.com/sany86russ/ThreadSense-AI/releases/download/v2.2.0/ThreadSense-AI-v2.2.0-unpacked.zip) from **Assets** on the [latest release](https://github.com/sany86russ/ThreadSense-AI/releases/latest).
+2. Extract the ZIP to a permanent location. It contains a ready-to-use `ThreadSense-AI-v2.2.0` directory with `manifest.json` at its root.
 3. Open `chrome://extensions`.
 4. Enable **Developer mode**.
 5. Select **Load unpacked**.
-6. Choose the project's `extension` directory.
+6. Choose the extracted `ThreadSense-AI-v2.2.0` directory — the one that directly contains `manifest.json`.
 7. Pin ThreadSense AI to the browser toolbar.
 
-If you clone the repository with Git, load the same `extension` directory. After pulling updates, press **Reload** on the extension card.
+> [!IMPORTANT]
+> Chrome loads a **directory**, not the ZIP file. Extract the archive first. Do not move or delete the selected directory after installing the extension.
+
+### Install from source
+
+Developers can clone the repository and select its `extension` directory. After pulling updates, press **Reload** on the extension card at `chrome://extensions`.
 
 ```powershell
 git clone https://github.com/sany86russ/ThreadSense-AI.git
@@ -121,11 +126,21 @@ cd ThreadSense-AI
 ```
 
 > [!NOTE]
-> The extension is currently distributed as unpacked source; Chrome Web Store publication is not required. Chrome may display its standard warning about developer-mode extensions.
+> The ready ZIP contains only extension files from tag `v2.2.0`: no tests, Git history, local settings, or keys. It is an unpacked Manifest V3 extension rather than a `.crx`; Chrome may display its standard Developer mode warning.
 
 ## 🚀 Quick start
 
-### 1. Connect AI
+### 1. Download and install the ready build
+
+1. Open the [latest ThreadSense AI release](https://github.com/sany86russ/ThreadSense-AI/releases/latest).
+2. Under **Assets**, download **`ThreadSense-AI-v2.2.0-unpacked.zip`**.
+3. Extract it and remember the location of the `ThreadSense-AI-v2.2.0` directory.
+4. Enter `chrome://extensions` in the Google Chrome address bar.
+5. Enable **Developer mode** in the top-right corner.
+6. Select **Load unpacked** and choose the `ThreadSense-AI-v2.2.0` directory containing `manifest.json`.
+7. Select the puzzle icon in the Chrome toolbar and pin **ThreadSense AI**.
+
+### 2. Connect AI
 
 Open **Settings → AI connection**, select a provider, paste your own API key, and press **Test**. After a successful check, assign models for:
 
@@ -135,7 +150,7 @@ Open **Settings → AI connection**, select a provider, paste your own API key, 
 
 If you are unsure, use one available low-cost model in all three fields and leave the advanced parameters unchanged.
 
-### 2. Add your profile and topic
+### 3. Add your profile and topic
 
 Under **My topic**:
 
@@ -146,7 +161,7 @@ Under **My topic**:
 
 A missing key, handle, or topic description is enough for the wizard to deliberately prevent startup.
 
-### 3. Set your voice
+### 4. Set your voice
 
 Open **My style** and choose one route:
 
@@ -154,7 +169,7 @@ Open **My style** and choose one route:
 - describe your tone and writing habits manually;
 - add several genuine examples of your comments.
 
-### 4. Start cautiously
+### 5. Start cautiously
 
 Keep the **Careful** preset and **Show me drafts first** enabled. Open Threads, press **Start**, and review every result in the queue.
 
