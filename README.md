@@ -449,31 +449,6 @@ SECURITY.md                # безопасное сообщение об уяз
 Сейчас проект распространяется как открытый исходный код и загружается в режиме разработчика. Проверяйте изменения перед обновлением.
 </details>
 
-## 💜 Поддержать автора
-
-ThreadSense AI распространяется бесплатно по лицензии MIT. Если проект оказался полезен, можно поддержать дальнейшую разработку криптовалютой. Спасибо! 🙌
-
-<table>
-<tr>
-<th align="center" width="50%">₿ Bitcoin (BTC)</th>
-<th align="center" width="50%">₮ Tether (USDT)</th>
-</tr>
-<tr>
-<td align="center">
-<img src="docs/qr-btc.png" width="210" alt="QR-код Bitcoin" /><br/>
-Сеть: <strong>Bitcoin</strong>
-</td>
-<td align="center">
-<img src="docs/qr-usdt.png" width="210" alt="QR-код USDT TRC20" /><br/>
-Сеть: <strong>Tron (TRC20)</strong>
-</td>
-</tr>
-<tr>
-<td align="center"><code>1GFcHvGPchDf6fgAqqtyZrEkFbVcrnWFgQ</code></td>
-<td align="center"><code>TEByALUzbYKWCYvyKPiAKrErs8ba6gc4Bo</code></td>
-</tr>
-</table>
-
 > [!WARNING]
 > Отправляйте средства **строго в указанной сети**: BTC — только Bitcoin, USDT — только Tron (TRC20). Перевод в другой сети может привести к безвозвратной потере средств. Перед отправкой обязательно сверьте адрес вручную.
 
